@@ -1,3 +1,5 @@
+@echo off
+
 @set include=
 @set savedpath=%path%
 @set path=%path%;..\..\..\bin
@@ -93,7 +95,7 @@ q3asm -f ../game
 @if errorlevel 1 goto quit
 
 mkdir "..\..\base\vm"
-copy *.qvm "..\..\base\vm"
+copy /y *.qvm "..\..\base\vm"
 
 :quit
 cd ..
