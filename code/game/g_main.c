@@ -105,6 +105,8 @@ vmCvar_t	g_logKills;
 vmCvar_t	g_logItems;
 vmCvar_t	g_logbs;
 
+vmCvar_t	g_maxTeamSize;
+
 int gDuelist1 = -1;
 int gDuelist2 = -1;
 
@@ -177,6 +179,7 @@ int gDuelist2 = -1;
 	{ &g_fairflag, "g_fairflag", "1", CVAR_VVV|CVAR_ARCHIVE, 0, qfalse, qfalse, "If the setting is enabled: in situations where more than one player is standing/touching a ctf flag, checks will be made to ensure that the guy standing closest to it will get/cap it, as an alternative to randomness deciding who should get it."  },
 	{ &g_allowChatPause, "g_allowChatPause", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qfalse, qfalse, "Players not on spectator team can pause/unpause the game by using !pause and !unpause in chat."  },
 
+	{ &g_maxTeamSize, "g_maxTeamSize", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "If set, specifies a maximum players allowed on each team." },
 
 
 	{ &g_saberInterpolate, "g_saberInterpolate", "1", CVAR_ARCHIVE, 0, qtrue },

@@ -486,6 +486,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 	spectatorState_t	specState;
 	int					specClient;
 	int					teamLeader;
+	int		counts[TEAM_NUM_TEAMS];
 
 	if (!ent || !ent->inuse || !ent->client) {
 		G_SecurityLogPrint( va("SetTeam: invalid entity, team: '%s'", s), ent);
@@ -518,12 +519,10 @@ void SetTeam( gentity_t *ent, char *s ) {
 			team = PickTeam( clientNum );
 		}
 
+		counts[TEAM_BLUE] = TeamCount( ent->client->ps.clientNum, TEAM_BLUE );
+		counts[TEAM_RED] = TeamCount( ent->client->ps.clientNum, TEAM_RED );
+
 		if ( g_teamForceBalance.integer  ) {
-			int		counts[TEAM_NUM_TEAMS];
-
-			counts[TEAM_BLUE] = TeamCount( ent->client->ps.clientNum, TEAM_BLUE );
-			counts[TEAM_RED] = TeamCount( ent->client->ps.clientNum, TEAM_RED );
-
 			// We allow a spread of two
 			if ( team == TEAM_RED && counts[TEAM_RED] - counts[TEAM_BLUE] > 1 ) {
 				trap_SendServerCommand( ent->client->ps.clientNum,
@@ -538,6 +537,19 @@ void SetTeam( gentity_t *ent, char *s ) {
 
 			// It's ok, the team we are switching to has less or same number of players
 		}
+
+		if (g_maxTeamSize.integer > 0 && g_maxTeamSize.integer < MAX_CLIENTS)
+		{ //now check if we have a capped team size
+			if (team == TEAM_RED && counts[TEAM_RED] >= g_maxTeamSize.integer) {
+				trap_SendServerCommand( ent->client->ps.clientNum, va("print \"%s\n\"", G_GetStripEdString("SVINGAME", "TOOMANYRED")) );
+				return;
+			}
+			else if (team == TEAM_BLUE && counts[TEAM_BLUE] >= g_maxTeamSize.integer) {
+				trap_SendServerCommand( ent->client->ps.clientNum, va("print \"%s\n\"", G_GetStripEdString("SVINGAME", "TOOMANYBLUE")) );
+				return;
+			}
+		}
+
 	} else {
 		// force them to spectators if there aren't any spots free
 		team = TEAM_FREE;
