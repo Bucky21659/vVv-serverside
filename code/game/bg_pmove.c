@@ -17,8 +17,8 @@ qboolean gPMDoSlowFall = qfalse;
 extern	vmCvar_t	g_pauseGame;
 extern	vmCvar_t	g_block333, g_maxmsec;
 
-#define BLOCK333_MS		5 //was 5  MINIMUM MSEC  - important: also block 250 fps physics - its nearly 333!
-//val of 5 = maximum fps allowed is 200
+#define BLOCK333_MS		4 //was 5  MINIMUM MSEC  - 250FPS physics are allowed as they are nearly identical to 125FPS
+//val of 4 = maximum fps allowed is 250
 // movement parameters
 
 
