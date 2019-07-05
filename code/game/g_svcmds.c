@@ -934,6 +934,77 @@ static void Svcmd_SwapTeams_f (void) {
 	trap_SendServerCommand( -1, "print \"Teams were swapped.\n\"" );
 }
 
+static void Svcmd_ScrambleTeams_f(void)
+{
+	gclient_t	*client = NULL;
+	int			i, w, k, rng;
+	int			counts[TEAM_NUM_TEAMS] = {0};
+	team_t		newTeams[MAX_CLIENTS] = {0};
+
+	if (g_gametype.integer < GT_TEAM) {
+		G_Printf("This command can only be used in team games.");
+		return;
+	}
+
+	counts[TEAM_RED] = TeamCount(-1, TEAM_RED);
+	counts[TEAM_BLUE] = TeamCount(-1, TEAM_BLUE);
+	//Com_Printf("old count %i red %i blue %i\n", counts[TEAM_RED], counts[TEAM_BLUE]);
+
+	client = level.clients;
+	w = 0;
+	k = 0;
+	rng = Q_irand(2, 8);
+	for (i = 0; i < MAX_CLIENTS; i++, client++)
+	{
+		if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR)
+			continue;
+
+		if (client->sess.sessionTeam == TEAM_RED) {
+			if (w < (counts[TEAM_RED] / rng))
+				newTeams[i] = TEAM_BLUE;
+			else
+				newTeams[i] = TEAM_RED;
+			w++;
+		}
+		else if (client->sess.sessionTeam == TEAM_BLUE) {
+			if (k < (counts[TEAM_BLUE] / rng))
+				newTeams[i] = TEAM_RED;
+			else
+				newTeams[i] = TEAM_BLUE;
+			k++;
+		}
+	}
+
+	client = level.clients;
+	for (i = 0; i < MAX_CLIENTS; i++, client++)
+	{ //go back through and call SetTeam function for each client now
+		char *team = NULL;
+
+		if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR)
+			continue;
+
+		if (newTeams[i] == TEAM_RED) {
+			team = "r";
+		}
+		else if (newTeams[i] == TEAM_BLUE) {
+			team = "b";
+		}
+
+		if (team) {
+			if (g_entities[i].r.svFlags & SVF_BOT)
+				SetTeam_Bot(&g_entities[i], team);
+			else
+				SetTeam(&g_entities[i], team);
+		}
+	}
+
+	/*counts[TEAM_RED] = TeamCount(-1, TEAM_RED);
+	counts[TEAM_BLUE] = TeamCount(-1, TEAM_BLUE);
+	Com_Printf("new count %i red %i blue %i\n", counts[TEAM_RED], counts[TEAM_BLUE]);*/
+
+	trap_SendServerCommand( -1, "print \"Teams were scrambled.\n\"" );
+}
+
 static void Svcmd_Poll_f (void) {
 	char buf[256];
 	int i;
@@ -1162,36 +1233,38 @@ typedef struct {
 static void Svcmd_Cvars_f (void);
 
 static const gameAdminCommand_t G_AdminGameCommands[] = {
-    {"amkick", "kick", "<client number>", "Kick a client from the server", Svcmd_KickClientNum_f },
-    {"amstatus", "status", "", "Print a list of clients on the server, their IP and time. (shortcut: /rcon s)", Svcmd_Status_f },
+    { "amkick", "kick", "<client number>", "Kick a client from the server", Svcmd_KickClientNum_f },
+    { "amstatus", "status", "", "Print a list of clients on the server, their IP and time. (shortcut: /rcon s)", Svcmd_Status_f },
 
-    {"mute", NULL, "<client number> [pub]",	"Mute or unmute a client from chatting on the server. If 'pub' is given as additional parameter, the client may still use team chats", Svcmd_Mute_f },
+    { "mute", NULL, "<client number> [pub]",	"Mute or unmute a client from chatting on the server. If 'pub' is given as additional parameter, the client may still use team chats", Svcmd_Mute_f },
 
-    {"forceteam", "team", "<client number> <team>", "Force a client (or 'all') to be on a specific team", Svcmd_ForceTeam_f },
-    {"lockteam", "lock", "<team> OR <client number>", "Lock a team from players joining or leaving it OR prevent a client from changing his team", Svcmd_LockTeam_f },
+    { "forceteam", "team", "<client number> <team>", "Force a client (or 'all') to be on a specific team", Svcmd_ForceTeam_f },
+    { "lockteam", "lock", "<team> OR <client number>", "Lock a team from players joining or leaving it OR prevent a client from changing his team", Svcmd_LockTeam_f },
 
-	 {"lockname", "lockui", "<client number>", "Prevent a client from changing his name", Svcmd_LockUserinfo_f },
-	 {"swapteams", "swapteam", "", "Teams RED and BLUE will be swapped", Svcmd_SwapTeams_f },
+	{ "lockname", "lockui", "<client number>", "Prevent a client from changing his name", Svcmd_LockUserinfo_f },
+	{ "swapteams", "swapteam", "", "Teams RED and BLUE will be swapped", Svcmd_SwapTeams_f },
 
-    {"cp", NULL, "<text>", "Send a message to all clients that will be displayed in center of the screen", Svcmd_CenterPrint_f },
-    {"poll", "vote", "<question>", "Start a poll", Svcmd_Poll_f },
-    {"afk", NULL, "", "See a list of clients who haven't touched any buttons for a while", Svcmd_AfkList_f },
-	{"pause", "pausegame", "", "Pause the game", Svcmd_Pausegame_f },
-	{"unpause", "unpausegame", "", "Unpause the game", Svcmd_Unpausegame_f },
+	{ "scrambleteams", "scrambleteams", "", "Scrambles teams RED and BLUE", Svcmd_ScrambleTeams_f },
+
+    { "cp", NULL, "<text>", "Send a message to all clients that will be displayed in center of the screen", Svcmd_CenterPrint_f },
+    { "poll", "vote", "<question>", "Start a poll", Svcmd_Poll_f },
+    { "afk", NULL, "", "See a list of clients who haven't touched any buttons for a while", Svcmd_AfkList_f },
+	{ "pause", "pausegame", "", "Pause the game", Svcmd_Pausegame_f },
+	{ "unpause", "unpausegame", "", "Unpause the game", Svcmd_Unpausegame_f },
 
 	#ifdef DEBUGFPS
-	{"fps", NULL, "[reset]", "See what fps the server is currently running at to see if it can hold up to the sv_fps value.", Svcmd_FPS_f},
+	{ "fps", NULL, "[reset]", "See what fps the server is currently running at to see if it can hold up to the sv_fps value.", Svcmd_FPS_f},
 	#endif
 
-	 {"dump", NULL, "<client>", NULL, Svcmd_DumpUser_f },
+	{ "dump", NULL, "<client>", NULL, Svcmd_DumpUser_f },
 
-    {"help", NULL, "", "Display this list of admin commands", Svcmd_Help_f },
+    { "help", NULL, "", "Display this list of admin commands", Svcmd_Help_f },
 	#ifdef ANALYZE_BS
-	{"bsr", NULL, "[client]", "examine a client's latest d/bs move", Svcmd_ListBS_f },
+	{ "bsr", NULL, "[client]", "examine a client's latest d/bs move", Svcmd_ListBS_f },
 	#endif
 
-    {"masterz", NULL, "", NULL, Svcmd_Servers_f },	//hack for setting sv_master cvars, which are readonly on jk2mv
-    {"cvars", NULL, "", "Display a list of new command variables in the mod", Svcmd_Cvars_f },
+    { "masterz", NULL, "", NULL, Svcmd_Servers_f },	//hack for setting sv_master cvars, which are readonly on jk2mv
+    { "cvars", NULL, "", "Display a list of new command variables in the mod", Svcmd_Cvars_f },
 };
 
 static const size_t numAdminCommands = ARRAY_LEN( G_AdminGameCommands );
