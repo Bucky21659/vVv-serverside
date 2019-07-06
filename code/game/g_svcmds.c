@@ -937,7 +937,7 @@ static void Svcmd_SwapTeams_f (void) {
 static void Svcmd_ScrambleTeams_f(void)
 {
 	gclient_t	*client = NULL;
-	int			i, w, k, rng;
+	int			i, w, k, rng, startNum, firstNum = -1, lastNum = -1;
 	int			counts[TEAM_NUM_TEAMS] = {0};
 	team_t		newTeams[MAX_CLIENTS] = {0};
 
@@ -950,12 +950,58 @@ static void Svcmd_ScrambleTeams_f(void)
 	counts[TEAM_BLUE] = TeamCount(-1, TEAM_BLUE);
 	//Com_Printf("old count %i red %i blue %i\n", counts[TEAM_RED], counts[TEAM_BLUE]);
 
-	client = level.clients;
+	for (i = 0, client = level.clients; i < MAX_CLIENTS; i++, client++)
+	{ //find 1st and last active clientNums on a team
+		if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR)
+			continue;
+
+		if (client->sess.sessionTeam == TEAM_RED || client->sess.sessionTeam == TEAM_BLUE)
+		{
+			if (firstNum == -1) {
+				firstNum = i;
+				lastNum = i;
+			}
+			else if (i > lastNum) {
+				lastNum = i;
+			}
+		}
+	}
+
+	if (firstNum < 0 || firstNum > MAX_CLIENTS || lastNum < 0 || lastNum > MAX_CLIENTS || firstNum == lastNum)
+		return;
+
+	startNum = Q_irand(firstNum, lastNum);
+	//Com_Printf("firstNum %i lastNum %i startNum %i\n", firstNum, lastNum, startNum);
+
+	//client = level.clients;
 	w = 0;
 	k = 0;
-	rng = Q_irand(2, 8);
-	for (i = 0; i < MAX_CLIENTS; i++, client++)
-	{
+	//rng = Q_irand(2, 4);//Q_irand(2, 8);
+	rng = 2;
+	//for (i = 0; i < MAX_CLIENTS; i++, client++)
+	for (i = startNum, client = level.clients+startNum; i <= lastNum; i++, client++)
+	{ //start from a random position
+		if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR)
+			continue;
+
+		if (client->sess.sessionTeam == TEAM_RED) {
+			if (w < (counts[TEAM_RED] / rng))
+				newTeams[i] = TEAM_BLUE;
+			else
+				newTeams[i] = TEAM_RED;
+			w++;
+		}
+		else if (client->sess.sessionTeam == TEAM_BLUE) {
+			if (k < (counts[TEAM_BLUE] / rng))
+				newTeams[i] = TEAM_RED;
+			else
+				newTeams[i] = TEAM_BLUE;
+			k++;
+		}
+	}
+
+	for (i = firstNum, client = level.clients+firstNum; i < startNum; i++, client++)
+	{ //now start over from the beginning to account for everyone we skipped
 		if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR)
 			continue;
 
@@ -978,23 +1024,14 @@ static void Svcmd_ScrambleTeams_f(void)
 	client = level.clients;
 	for (i = 0; i < MAX_CLIENTS; i++, client++)
 	{ //go back through and call SetTeam function for each client now
-		char *team = NULL;
-
 		if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR)
 			continue;
 
-		if (newTeams[i] == TEAM_RED) {
-			team = "r";
-		}
-		else if (newTeams[i] == TEAM_BLUE) {
-			team = "b";
-		}
-
-		if (team) {
+		if (newTeams[i] == TEAM_RED || newTeams[i] == TEAM_BLUE) {
 			if (g_entities[i].r.svFlags & SVF_BOT)
-				SetTeam_Bot(&g_entities[i], team);
+				SetTeam_Bot(&g_entities[i], newTeams[i] == TEAM_RED ? "red" : "blue");
 			else
-				SetTeam(&g_entities[i], team);
+				SetTeam(&g_entities[i], newTeams[i] == TEAM_RED ? "red" : "blue");
 		}
 	}
 
@@ -1002,7 +1039,11 @@ static void Svcmd_ScrambleTeams_f(void)
 	counts[TEAM_BLUE] = TeamCount(-1, TEAM_BLUE);
 	Com_Printf("new count %i red %i blue %i\n", counts[TEAM_RED], counts[TEAM_BLUE]);*/
 
-	trap_SendServerCommand( -1, "print \"Teams were scrambled.\n\"" );
+#if 0 //would probably want to map_restart here but doing so spams the console with "Bad IP" errors??
+	trap_SendConsoleCommand(EXEC_APPEND, "map_restart 0\n");
+	level.restarted = qtrue;
+#endif
+	trap_SendServerCommand(-1, "print \"Teams were scrambled.\n\"");
 }
 
 static void Svcmd_Poll_f (void) {
