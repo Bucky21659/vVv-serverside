@@ -936,108 +936,69 @@ static void Svcmd_SwapTeams_f (void) {
 
 static void Svcmd_ScrambleTeams_f(void)
 {
-	gclient_t	*client = NULL;
-	int			i, w, k, startNum, firstNum = -1, lastNum = -1;
-	int			counts[TEAM_NUM_TEAMS] = {0};
-	team_t		newTeams[MAX_CLIENTS] = {0};
+	gclient_t   *client = NULL;
+	gentity_t	*gent = NULL;
+	int			i, c;
+	//int			counts[TEAM_NUM_TEAMS] = {0};
+	int			players[MAX_CLIENTS] = {0};
 
 	if (g_gametype.integer < GT_TEAM) {
 		G_Printf("This command can only be used in team games.");
 		return;
 	}
 
-	counts[TEAM_RED] = TeamCount(-1, TEAM_RED);
-	counts[TEAM_BLUE] = TeamCount(-1, TEAM_BLUE);
-	counts[TEAM_FREE] = counts[TEAM_RED] + counts[TEAM_BLUE]; //this is our total
-	//Com_Printf("old count %i red %i blue %i\n", counts[TEAM_RED], counts[TEAM_BLUE]);
-
-	for (i = 0, client = level.clients; i < MAX_CLIENTS; i++, client++)
-	{ //find 1st and last active clientNums on a team
-		if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR)
-			continue;
-
-		if (client->sess.sessionTeam == TEAM_RED || client->sess.sessionTeam == TEAM_BLUE)
-		{
-			if (firstNum == -1) {
-				firstNum = i;
-				lastNum = i;
-			}
-			else if (i > lastNum) {
-				lastNum = i;
-			}
-		}
-	}
-
-	if (firstNum < 0 || firstNum > MAX_CLIENTS || lastNum < 0 || lastNum > MAX_CLIENTS || firstNum == lastNum)
-		return;
-
-	for (i = 0; i < counts[TEAM_FREE]; i++)
-	{ //split our teams from a random starting position for as many times as there are players
-		startNum = Q_irand(firstNum, lastNum);
-
-		w = 0;
-		k = 0;
-		for (i = startNum, client = level.clients+startNum; i <= lastNum; i++, client++)
-		{ //start from a random position
-			if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR)
-				continue;
-
-			if (client->sess.sessionTeam == TEAM_RED) {
-				if (w < (counts[TEAM_RED] / 2))
-					newTeams[i] = TEAM_BLUE;
-				else
-					newTeams[i] = TEAM_RED;
-				w++;
-			}
-			else if (client->sess.sessionTeam == TEAM_BLUE) {
-				if (k < (counts[TEAM_BLUE] / 2))
-					newTeams[i] = TEAM_RED;
-				else
-					newTeams[i] = TEAM_BLUE;
-				k++;
-			}
-		}
-
-		for (i = firstNum, client = level.clients+firstNum; i < startNum; i++, client++)
-		{ //now start over from the beginning to account for everyone we skipped
-			if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR)
-				continue;
-
-			if (client->sess.sessionTeam == TEAM_RED) {
-				if (w < (counts[TEAM_RED] / 2))
-					newTeams[i] = TEAM_BLUE;
-				else
-					newTeams[i] = TEAM_RED;
-				w++;
-			}
-			else if (client->sess.sessionTeam == TEAM_BLUE) {
-				if (k < (counts[TEAM_BLUE] / 2))
-					newTeams[i] = TEAM_RED;
-				else
-					newTeams[i] = TEAM_BLUE;
-				k++;
-			}
-		}
-	}
-
-	for (i = 0, client = level.clients; i < MAX_CLIENTS; i++, client++)
-	{ //go back through and call SetTeam function for each client now
-		if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR)
-			continue;
-
-		if (newTeams[i] == TEAM_RED || newTeams[i] == TEAM_BLUE) {
-			if (g_entities[i].r.svFlags & SVF_BOT)
-				SetTeam_Bot(&g_entities[i], newTeams[i] == TEAM_RED ? "red" : "blue");
-			else
-				SetTeam(&g_entities[i], newTeams[i] == TEAM_RED ? "red" : "blue");
-		}
-	}
-
 	/*counts[TEAM_RED] = TeamCount(-1, TEAM_RED);
 	counts[TEAM_BLUE] = TeamCount(-1, TEAM_BLUE);
-	Com_Printf("new count %i red %i blue %i\n", counts[TEAM_RED], counts[TEAM_BLUE]);*/
+	counts[TEAM_FREE] = counts[TEAM_RED] + counts[TEAM_BLUE];
+	Com_Printf("old count %i red %i blue %i\n", counts[TEAM_RED], counts[TEAM_BLUE]);*/
 
-#if 0 //would probably want to map_restart here but doing so spams the console with "Bad IP" errors??
+	for (i = 0, client = level.clients; i < MAX_CLIENTS; i++, client++)
+	{ //build an array of active client numbers
+		if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR) {
+			players[i] = -1;
+			continue;
+		}
+
+		if (client->sess.sessionTeam == TEAM_RED || client->sess.sessionTeam == TEAM_BLUE) {
+			players[i] = i;
+		}
+		else {
+			players[i] = -1;
+		}
+	}
+
+	/*for (i = 0;i < MAX_CLIENTS;i++) {
+		Com_Printf("players[%i] %i\n", i, players[i]);
+	}*/
+
+	Q_shuffle(players, sizeof(players)/sizeof(int));
+
+	/*for (i = 0;i < MAX_CLIENTS;i++) {
+		Com_Printf("players[%i] %i\n", i, players[i]);
+	}*/
+
+	c = 0;
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (players[i] < 0)
+			continue;
+
+		gent = &g_entities[players[i]];
+		if (!gent || !gent->inuse || !gent->client)
+			continue;
+
+		client = gent->client;
+		if (!client || client->pers.connected == CON_DISCONNECTED || client->sess.sessionTeam == TEAM_SPECTATOR)
+			continue;
+
+		if (gent->r.svFlags & SVF_BOT)
+			SetTeam_Bot(gent, (c % 2) ? "red" : "blue");
+		else
+			SetTeam(gent, (c % 2) ? "red" : "blue");
+		c++;
+	}
+
+#if 1 //causes issues if this command is run too many times...
 	trap_SendConsoleCommand(EXEC_APPEND, "map_restart 0\n");
 	level.restarted = qtrue;
 #endif

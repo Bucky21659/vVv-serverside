@@ -1979,6 +1979,8 @@ float flrand(float min, float max);
 int irand(int min, int max);
 int Q_irand(int value1, int value2);
 
+void Q_shuffle(int *array, size_t n);
+
 /*
 Ghoul2 Insert Start
 */
