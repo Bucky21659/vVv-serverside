@@ -704,6 +704,9 @@ typedef enum {
 	MOD_SUICIDE,
 	MOD_TARGET_LASER,
 	MOD_TRIGGER_HURT,
+#ifdef JK2_GAME
+	MOD_SUICIDECMD, //so suicides from explosives/falling to death still subtract score
+#endif
 	MOD_MAX
 } meansOfDeath_t;
 

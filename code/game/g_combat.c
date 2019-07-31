@@ -986,6 +986,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	int			i;
 	char		*killerName, *obit;
 	qboolean	wasJediMaster = qfalse;
+	qboolean	scoreDeath = qtrue;
 
 	if ( self->client->ps.pm_type == PM_DEAD ) {
 		return;
@@ -1028,6 +1029,13 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	// CheckAlmostCapture( self, attacker );
 
 	self->client->ps.pm_type = PM_DEAD;
+
+	if (meansOfDeath == MOD_SUICIDECMD)
+	{
+		if (g_fixSuicideScores.integer && (g_gametype.integer != GT_TOURNAMENT || g_fixSuicideScores.integer == 2))
+			scoreDeath = qfalse;
+		meansOfDeath = MOD_SUICIDE;
+	}
 
 	if ( attacker ) {
 		killer = attacker->s.number;
@@ -1092,12 +1100,12 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	self->client->ps.persistant[PERS_KILLED]++;
 
-	if (self == attacker && self && self->client)
-	{
+	if (self == attacker && self && self->client) {
 		self->client->ps.fd.suicides++;
 	}
-	else if (attacker && attacker->client)
+	else if (attacker && attacker->client) {
 		level.teamstats[ BinaryTeam(attacker) ].frags++;
+	}
 
 	if (attacker && attacker->client) {
 		attacker->client->lastkilled_client = self->s.number;
@@ -1121,12 +1129,12 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 				{
 					AddScore( &g_entities[otherClNum], self->r.currentOrigin, 1 );
 				}
-				else
+				else if (scoreDeath)
 				{
 					AddScore( attacker, self->r.currentOrigin, -1 );
 				}
 			}
-			else
+			else if (scoreDeath)
 			{
 				AddScore( attacker, self->r.currentOrigin, -1 );
 			}

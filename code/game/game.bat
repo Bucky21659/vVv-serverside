@@ -9,7 +9,7 @@
 del /q vm
 if not exist vm\nul mkdir vm
 cd vm
-set cc=..\..\..\bin\lcc -A -DQ3_VM -DMISSIONPACK -S -Wf-target=bytecode -Wf-g -I..\..\cgame -I..\..\game -I..\..\ui %1
+set cc=..\..\..\bin\lcc -A -DQ3_VM -DMISSIONPACK -DJK2_GAME -S -Wf-target=bytecode -Wf-g -I..\..\cgame -I..\..\game -I..\..\ui %1
 
 %cc%  ../g_main.c
 @if errorlevel 1 goto quit

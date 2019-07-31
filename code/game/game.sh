@@ -4,7 +4,7 @@ cd vm
 rm ./*.asm
 
 echo -e "\nStarting q3lcc to generate bytecode.."
-LCC="../../../bin/q3lcc -DQ3_VM -DMISSIONPACK -DCGAME -S -Wf-target=bytecode"
+LCC="../../../bin/q3lcc -DQ3_VM -DMISSIONPACK -DJK2_GAME -S -Wf-target=bytecode"
 
 # source files
 FILES="g_main.c g_syscalls.c bg_misc.c bg_lib.c bg_pmove.c bg_saber.c bg_slidemove.c bg_panimate.c bg_weapons.c
