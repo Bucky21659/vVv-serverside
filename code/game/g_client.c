@@ -1170,6 +1170,26 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 	Q_strncpyz( client->pers.netnameClean, client->pers.netname, sizeof(client->pers.netnameClean) );
 	Q_CleanStr( client->pers.netnameClean );
 
+	if (g_forceUniqueNames.integer)
+	{
+		gclient_t *cl;
+		int w;
+
+		for (w = 0, cl = level.clients; w < MAX_CLIENTS; w++, cl++) {
+			if (!cl || cl->pers.connected == CON_DISCONNECTED || cl == client || !cl->pers.netnameClean[0] || cl->pers.netnameClean[0] == '\0')
+				continue;
+
+			if (!Q_stricmp(client->pers.netnameClean, cl->pers.netnameClean))
+			{
+				char newName[MAX_NETNAME] = { 0 };
+				Com_sprintf(newName, sizeof(newName), "Padawan %s(%s%i%s)", S_COLOR_WHITE, S_COLOR_CYAN, clientNum, S_COLOR_WHITE);
+				Q_strncpyz( client->pers.netname, newName, sizeof(client->pers.netname) );
+				Q_strncpyz( client->pers.netnameClean, client->pers.netname, sizeof(client->pers.netnameClean) );
+				Q_CleanStr( client->pers.netnameClean );
+			}
+		}
+	}
+
 	//Update the correct name in the engine
 	Info_SetValueForKey(userinfo, "name", client->pers.netname);
 

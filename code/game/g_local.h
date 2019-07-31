@@ -1166,6 +1166,7 @@ extern	vmCvar_t	g_allowChatPause;
 extern	vmCvar_t	g_logbs;
 
 extern	vmCvar_t	g_maxTeamSize;
+extern	vmCvar_t	g_forceUniqueNames;
 
 // extern	vmCvar_t	g_scorePlums;
 
