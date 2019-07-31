@@ -1,5 +1,7 @@
 @echo off
 
+@set "zip=C:\Program Files\7-Zip\7z.exe"
+
 @set include=
 @set savedpath=%path%
 @set path=%path%;..\..\..\bin
@@ -96,6 +98,14 @@ q3asm -f ../game
 
 mkdir "..\..\base\vm"
 copy /y *.qvm "..\..\base\vm"
+
+del /q *.asm
+del /q *.map
+
+cd ..
+::echo %zip%
+if exist "%zip%" "%zip%" a -tzip ..\base\o102_vvv_serverside.pk3 .\vm
+exit /B
 
 :quit
 cd ..

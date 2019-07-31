@@ -1,3 +1,6 @@
 *.qvm
 *.asm
 *.map
+*.pk3
+
+code/game/.vs/
