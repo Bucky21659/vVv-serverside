@@ -1408,6 +1408,12 @@ static void PM_FlyMove( void ) {
 	PM_Friction ();
 
 	scale = PM_CmdScale( &pm->cmd );
+
+	if ( pm->ps->pm_type == PM_SPECTATOR && pm->cmd.buttons & BUTTON_ALT_ATTACK ) {
+		//turbo boost
+		scale *= 10;
+	}
+
 	//
 	// user intentions
 	//

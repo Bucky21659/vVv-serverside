@@ -604,7 +604,7 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 	//alt attack = followprev
 	#if 1
 	//an option for this which every client can decide on
-	else if ( (client->sess.amflags & AMFLAG_ALTFOLLOW) && ( client->buttons & BUTTON_ALT_ATTACK ) && !( client->oldbuttons & BUTTON_ALT_ATTACK ) ) {
+	else if ( ( client->sess.amflags & AMFLAG_ALTFOLLOW ) && ( client->ps.pm_flags & PMF_FOLLOW ) && ( client->buttons & BUTTON_ALT_ATTACK ) && !( client->oldbuttons & BUTTON_ALT_ATTACK ) ) {
 		Cmd_FollowCycle_f( ent, -1 );
 	}
 	#endif

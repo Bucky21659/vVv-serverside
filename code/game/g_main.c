@@ -2373,7 +2373,6 @@ static void G_CheckUnpause (void)
 		lastPrint = -1;
 	}
 
-
 }
 
 /*
