@@ -374,8 +374,7 @@ typedef struct {
 #define AMFLAG_LOCKEDNAME		4
 #define AMFLAG_LOCKEDTEAM		8
 #define AMFLAG_ALTFOLLOW		16  //client can use alt-attack to follow prev client in spec
-
-
+#define AMFLAG_PLUGINDETECTED	32
 
 // client data that stays across multiple levels or tournament restarts
 // this is achieved by writing all the data to cvar strings at game shutdown
@@ -623,7 +622,12 @@ typedef struct {
 
 	#define G_BLUETEAM		0
 	#define G_REDTEAM		1
+#if 1//TESTING
+	#define G_YELLOWTEAM	2;
+	teamStats_t	teamstats[3];
+#else
 	teamStats_t	teamstats[2];
+#endif
 
 	int			numConnectedClients;
 	int			numNonSpectatorClients;	// includes connecting clients
@@ -666,6 +670,10 @@ typedef struct {
 	char		*spawnVars[MAX_SPAWN_VARS][2];	// key / value pairs
 	int			numSpawnVarChars;
 	char		spawnVarChars[MAX_SPAWN_VARS_CHARS];
+
+#if 1//TESTING
+	qboolean	TeamCTF3Mode;
+#endif
 
 	#define		UNPAUSE_COUNTDOWN	3000
 	int			unpauseTime;			//when level.time hits this, unpause the game if it is paused.
@@ -1168,6 +1176,10 @@ extern	vmCvar_t	g_logbs;
 extern	vmCvar_t	g_maxTeamSize;
 extern	vmCvar_t	g_fixSuicideScores;
 extern	vmCvar_t	g_forceUniqueNames;
+#define TESTING 1
+#if TESTING
+extern	vmCvar_t	g_allowFreeTeam;
+#endif
 
 // extern	vmCvar_t	g_scorePlums;
 

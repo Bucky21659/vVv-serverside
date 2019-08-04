@@ -21,7 +21,15 @@ static void G_SendTeamStats( gentity_t *ent ) {
 	int i;
 	char *pch = &msg[0];
 
+#if TESTING
+	for (i = 0; i < 3; ++i) {
+		teamStats_t *ts = &level.teamstats[ i ];
+		const char *s;
 
+		s = va("%d %d %d %d %d %d %d ", ts->rets, ts->defense, ts->assist, ts->flaghold, ts->flaggrabs, ts->frags, ts->score);
+		pch = mystrcat(pch, sizeof(msg), s);
+	}
+#else
 	for (i = 0; i < 2; ++i) {
 		teamStats_t *ts = &level.teamstats[ i ];
 		const char *s;
@@ -29,6 +37,7 @@ static void G_SendTeamStats( gentity_t *ent ) {
 		s = va("%d %d %d %d %d %d %d ", ts->rets, ts->defense, ts->assist, ts->flaghold, ts->flaggrabs, ts->frags, ts->score);
 		pch = mystrcat(pch, sizeof(msg), s);
 	}
+#endif
 
 	pch = va(TEAMSTATS_CMD" %s", msg);
 
@@ -486,7 +495,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 	spectatorState_t	specState;
 	int					specClient;
 	int					teamLeader;
-	int		counts[TEAM_NUM_TEAMS];
+	int					counts[TEAM_NUM_TEAMS];
 
 	if (!ent || !ent->inuse || !ent->client) {
 		G_SecurityLogPrint( va("SetTeam: invalid entity, team: '%s'", s), ent);
@@ -515,12 +524,17 @@ void SetTeam( gentity_t *ent, char *s ) {
 			team = TEAM_RED;
 		} else if ( !Q_stricmp( s, "blue" ) || !Q_stricmp( s, "b" ) ) {
 			team = TEAM_BLUE;
+#if TESTING
+		} else if (g_allowFreeTeam.integer && (!Q_stricmp(s, "free") || !Q_stricmp(s, "f"))) {
+			team = TEAM_FREE;
+#endif
 		} else {
 			team = PickTeam( clientNum );
 		}
 
 		counts[TEAM_BLUE] = TeamCount( ent->client->ps.clientNum, TEAM_BLUE );
 		counts[TEAM_RED] = TeamCount( ent->client->ps.clientNum, TEAM_RED );
+		counts[TEAM_FREE] = TeamCount( ent->client->ps.clientNum, TEAM_FREE );
 
 		if ( g_teamForceBalance.integer  ) {
 			// We allow a spread of two
@@ -763,7 +777,6 @@ qboolean SetTeam_User( gentity_t *ent, const char *s ) {
 	if ( (g_gametype.integer == GT_TOURNAMENT ) && oldTeam == TEAM_FREE ) {
 		ent->client->sess.losses++;
 	}
-
 
 	//all checks parsed, he can change team
 	SetTeam( ent, (char*)s );

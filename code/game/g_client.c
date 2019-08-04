@@ -1240,8 +1240,9 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 		else
 			team = PickTeam( clientNum );		// pick the team with the least number of players
 	}
-	else
+	else {
 		team = client->sess.sessionTeam;
+	}
 
 /* 	if (g_gametype.integer >= GT_TEAM) {
 		client->pers.teamInfo = qtrue;
@@ -1266,6 +1267,35 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 	// colors
 	Q_strncpyz(c1, Info_ValueForKey( userinfo, "color1" ), sizeof(c1));
 	Q_strncpyz(c2, Info_ValueForKey( userinfo, "color2" ), sizeof(c2));
+
+#if TESTING
+	if (team == TEAM_FREE && (level.TeamCTF3Mode || g_allowFreeTeam.integer))
+	{
+		char *skin = NULL;
+
+		if (atoi(c1) != SABER_YELLOW) {
+			char *c = va("%i", SABER_YELLOW);
+			Info_SetValueForKey(userinfo, "color1", c);
+			Q_strncpyz(c1, c, sizeof(c1));
+		}
+
+		skin = strchr(model, '/');
+		if (skin && Q_stricmp(skin, "/default")) {
+			Q_strncpyz(model, model, 1+strlen(model)-strlen(skin)); //terminate at the /
+			Q_strcat(model, sizeof(model), "/default"); //appends /default skin
+			Info_SetValueForKey(userinfo, "model", model);
+			Info_SetValueForKey(userinfo, "team_model", model);
+		}
+	}
+
+	s = Info_ValueForKey(userinfo, "cjp_client");
+	if (s && !Q_stricmpn(s, "1.4JAPRO", 8)) {
+		client->sess.amflags |= AMFLAG_PLUGINDETECTED;
+	}
+	else {
+		client->sess.amflags &= AMFLAG_PLUGINDETECTED;
+	}
+#endif
 
 	Q_strncpyz(redTeam, Info_ValueForKey( userinfo, "g_redteam" ), sizeof(redTeam));
 	Q_strncpyz(blueTeam, Info_ValueForKey( userinfo, "g_blueteam" ), sizeof(blueTeam));

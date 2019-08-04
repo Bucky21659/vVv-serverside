@@ -1935,6 +1935,15 @@ void G_CheckTeamItems( void ) {
 		if ( !item || !itemRegistered[ item - bg_itemlist ] ) {
 			G_Printf( S_COLOR_YELLOW "WARNING: No team_CTF_blueflag in map\n" );
 		}
+#if TESTING
+		if (level.TeamCTF3Mode || g_allowFreeTeam.integer) {
+			//Com_Printf("^6TeamCTF3Mode mode active\n");
+			item = BG_FindItem("team_CTF_neutralflag");
+			if (!item || !itemRegistered[item - bg_itemlist]) {
+				G_Printf( S_COLOR_YELLOW "WARNING: No team_CTF_neutralflag in map\n" );
+			}
+		}
+#endif
 	}
 }
 

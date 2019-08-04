@@ -977,7 +977,7 @@ static void Svcmd_ScrambleTeams_f(void)
 		Com_Printf("players[%i] %i\n", i, players[i]);
 	}*/
 
-	c = 0;
+	//c = 0;
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (players[i] < 0)
@@ -992,10 +992,14 @@ static void Svcmd_ScrambleTeams_f(void)
 			continue;
 
 		if (gent->r.svFlags & SVF_BOT)
+			SetTeam_Bot(gent, (i % 2) ? "red" : "blue");
+		else
+			SetTeam(gent, (i % 2) ? "red" : "blue");
+		/*c++;
+		if (gent->r.svFlags & SVF_BOT)
 			SetTeam_Bot(gent, (c % 2) ? "red" : "blue");
 		else
-			SetTeam(gent, (c % 2) ? "red" : "blue");
-		c++;
+			SetTeam(gent, (c % 2) ? "red" : "blue");*/
 	}
 
 #if 1 //causes issues if this command is run too many times...
