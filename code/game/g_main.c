@@ -1348,6 +1348,9 @@ void CalculateRanks( void ) {
 	if ( g_gametype.integer >= GT_TEAM ) {
 		trap_SetConfigstring( CS_SCORES1, va("%i", level.teamScores[TEAM_RED] ) );
 		trap_SetConfigstring( CS_SCORES2, va("%i", level.teamScores[TEAM_BLUE] ) );
+		if (level.TeamCTF3Mode || g_allowFreeTeam.integer) { //hijacking jedimaster for now
+			trap_SetConfigstring(CS_CLIENT_JEDIMASTER, va("%i", level.teamScores[TEAM_FREE]));
+		}
 	} else {
 		if ( level.numConnectedClients == 0 ) {
 			trap_SetConfigstring( CS_SCORES1, va("%i", SCORE_NOT_PRESENT) );
