@@ -34,7 +34,8 @@ void SP_info_player_deathmatch( gentity_t *ent ) {
 equivelant to info_player_deathmatch
 */
 void SP_info_player_start(gentity_t *ent) {
-	ent->classname = "info_player_deathmatch";
+	if (!level.CTF3ModeActive) //since we use these to set initial spawns in CTF
+		ent->classname = "info_player_deathmatch";
 	SP_info_player_deathmatch( ent );
 }
 
