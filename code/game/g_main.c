@@ -110,6 +110,7 @@ vmCvar_t	g_allowFreeTeam;
 vmCvar_t	g_maxTeamSize;
 vmCvar_t	g_fixSuicideScores;
 vmCvar_t	g_forceUniqueNames;
+vmCvar_t	g_enableChatBubble;
 
 int gDuelist1 = -1;
 int gDuelist2 = -1;
@@ -188,6 +189,7 @@ int gDuelist2 = -1;
 	{ &g_maxTeamSize, "g_maxTeamSize", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "If set, specifies a maximum players allowed on each team." },
 	{ &g_fixSuicideScores, "g_fixSuicideScores", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Does not subtract score from player when they suicide with /kill." },
 	{ &g_forceUniqueNames, "g_forceUniqueNames", "1", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Disallows more than one player to have the same name, additionally appends client number to \"Padawan\" names." },
+	{ &g_enableChatBubble, "g_enableChatBubble", "1", CVAR_VVV, 0, qtrue, qfalse, "" },
 
 	{ &g_saberInterpolate, "g_saberInterpolate", "1", CVAR_ARCHIVE, 0, qtrue },
 
