@@ -671,10 +671,6 @@ typedef struct {
 	int			numSpawnVarChars;
 	char		spawnVarChars[MAX_SPAWN_VARS_CHARS];
 
-#if 1//TESTING
-	qboolean	TeamCTF3Mode;
-#endif
-
 	#define		UNPAUSE_COUNTDOWN	3000
 	int			unpauseTime;			//when level.time hits this, unpause the game if it is paused.
 	int			unpauseClient;
@@ -697,6 +693,8 @@ typedef struct {
 	int			bodyQueIndex;			// dead bodies
 	gentity_t	*bodyQue[BODY_QUEUE_SIZE];
 	int			portalSequence;
+
+	qboolean	CTF3ModeActive; //Set to true when a map that supports 3 teams has been loaded, uses TEAM_FREE for 3rd team.
 } level_locals_t;
 
 
@@ -1173,17 +1171,13 @@ extern	vmCvar_t	g_fairflag;
 extern	vmCvar_t	g_allowChatPause;
 extern	vmCvar_t	g_logbs;
 
+extern	vmCvar_t	g_developer;
 extern	vmCvar_t	g_maxTeamSize;
 extern	vmCvar_t	g_fixSuicideScores;
 extern	vmCvar_t	g_forceUniqueNames;
-#define TESTING 1
-#if TESTING
 extern	vmCvar_t	g_allowFreeTeam;
-#endif
 
 // extern	vmCvar_t	g_scorePlums;
-
-
 
 extern	vmCvar_t	g_motd;
 extern	vmCvar_t	g_warmup;

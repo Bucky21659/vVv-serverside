@@ -1665,7 +1665,7 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 					(item->giTag == PW_BLUEFLAG && (ps->powerups[PW_REDFLAG] || ps->powerups[PW_NEUTRALFLAG])) )
 					return qtrue;
 			}
-			else if (ps->persistant[PERS_TEAM] == TEAM_FREE /*&& level.TeamCTF3Mode || g_allowFreeTeam.integer*/) {
+			else if (ps->persistant[PERS_TEAM] == TEAM_FREE /*&& level.CTF3ModeActive*/) {
 				//if (item->giTag == PW_REDFLAG || item->giTag == PW_BLUEFLAG ||
 				if ((item->giTag == PW_REDFLAG && !ps->powerups[PW_BLUEFLAG]) || (item->giTag == PW_BLUEFLAG && !ps->powerups[PW_REDFLAG]) ||
 					(item->giTag == PW_NEUTRALFLAG && ent->modelindex2) ||

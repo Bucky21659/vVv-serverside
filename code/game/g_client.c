@@ -1268,8 +1268,7 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 	Q_strncpyz(c1, Info_ValueForKey( userinfo, "color1" ), sizeof(c1));
 	Q_strncpyz(c2, Info_ValueForKey( userinfo, "color2" ), sizeof(c2));
 
-#if TESTING
-	if (team == TEAM_FREE && (level.TeamCTF3Mode || g_allowFreeTeam.integer))
+	if (level.CTF3ModeActive && team == TEAM_FREE)
 	{
 		char *skin = NULL;
 
@@ -1295,7 +1294,6 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 	else {
 		client->sess.amflags &= AMFLAG_PLUGINDETECTED;
 	}
-#endif
 
 	Q_strncpyz(redTeam, Info_ValueForKey( userinfo, "g_redteam" ), sizeof(redTeam));
 	Q_strncpyz(blueTeam, Info_ValueForKey( userinfo, "g_blueteam" ), sizeof(blueTeam));

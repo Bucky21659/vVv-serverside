@@ -21,7 +21,7 @@ static void G_SendTeamStats( gentity_t *ent ) {
 	int i;
 	char *pch = &msg[0];
 
-#if TESTING
+#if 0//TESTING
 	for (i = 0; i < 3; ++i) {
 		teamStats_t *ts = &level.teamstats[ i ];
 		const char *s;
@@ -502,7 +502,6 @@ void SetTeam( gentity_t *ent, char *s ) {
 		return;
 	}
 
-
 	//
 	// see what change is requested
 	//
@@ -524,10 +523,9 @@ void SetTeam( gentity_t *ent, char *s ) {
 			team = TEAM_RED;
 		} else if ( !Q_stricmp( s, "blue" ) || !Q_stricmp( s, "b" ) ) {
 			team = TEAM_BLUE;
-#if TESTING
-		} else if (g_allowFreeTeam.integer && (!Q_stricmp(s, "free") || !Q_stricmp(s, "f"))) {
+		} else if (level.CTF3ModeActive && (!Q_stricmp(s, "free") || !Q_stricmp(s, "f"))
+		{
 			team = TEAM_FREE;
-#endif
 		} else {
 			team = PickTeam( clientNum );
 		}

@@ -105,12 +105,11 @@ vmCvar_t	g_logKills;
 vmCvar_t	g_logItems;
 vmCvar_t	g_logbs;
 
+vmCvar_t	g_developer;
+vmCvar_t	g_allowFreeTeam;
 vmCvar_t	g_maxTeamSize;
 vmCvar_t	g_fixSuicideScores;
 vmCvar_t	g_forceUniqueNames;
-#if TESTING
-vmCvar_t	g_allowFreeTeam;
-#endif
 
 int gDuelist1 = -1;
 int gDuelist2 = -1;
@@ -184,12 +183,11 @@ int gDuelist2 = -1;
 	{ &g_fairflag, "g_fairflag", "1", CVAR_VVV|CVAR_ARCHIVE, 0, qfalse, qfalse, "If the setting is enabled: in situations where more than one player is standing/touching a ctf flag, checks will be made to ensure that the guy standing closest to it will get/cap it, as an alternative to randomness deciding who should get it."  },
 	{ &g_allowChatPause, "g_allowChatPause", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qfalse, qfalse, "Players not on spectator team can pause/unpause the game by using !pause and !unpause in chat."  },
 
+	{ &g_developer, "developer", "0", CVAR_TEMP, 0, qfalse, qfalse, "" },
+	{ &g_allowFreeTeam, "g_allowFreeTeam", "0", CVAR_VVV|CVAR_TEMP|CVAR_SERVERINFO, 0, qfalse, qfalse, "Configstring indicating that server is running 3 team CTF mode" },
 	{ &g_maxTeamSize, "g_maxTeamSize", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "If set, specifies a maximum players allowed on each team." },
 	{ &g_fixSuicideScores, "g_fixSuicideScores", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Does not subtract score from player when they suicide with /kill." },
 	{ &g_forceUniqueNames, "g_forceUniqueNames", "1", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Disallows more than one player to have the same name, additionally appends client number to \"Padawan\" names." },
-#if TESTING
-	{ &g_allowFreeTeam, "g_allowFreeTeam", "0", CVAR_VVV|CVAR_SERVERINFO, 0, qtrue, qfalse, "Testing" },
-#endif
 
 	{ &g_saberInterpolate, "g_saberInterpolate", "1", CVAR_ARCHIVE, 0, qtrue },
 
@@ -1352,7 +1350,7 @@ void CalculateRanks( void ) {
 	if ( g_gametype.integer >= GT_TEAM ) {
 		trap_SetConfigstring( CS_SCORES1, va("%i", level.teamScores[TEAM_RED] ) );
 		trap_SetConfigstring( CS_SCORES2, va("%i", level.teamScores[TEAM_BLUE] ) );
-		if (level.TeamCTF3Mode || g_allowFreeTeam.integer) { //hijacking jedimaster for now
+		if (level.CTF3ModeActive) { //hijacking jedimaster for now
 			trap_SetConfigstring(CS_CLIENT_JEDIMASTER, va("%i", level.teamScores[TEAM_FREE]));
 		}
 	} else {
@@ -1987,7 +1985,7 @@ qboolean ScoreIsTied( void ) {
 	}
 
 	if ( g_gametype.integer >= GT_TEAM ) {
-		if (level.TeamCTF3Mode || g_allowFreeTeam.integer) {
+		if (level.CTF3ModeActive) {
 			if (level.teamScores[TEAM_RED] > level.teamScores[TEAM_BLUE] && level.teamScores[TEAM_RED] > level.teamScores[TEAM_FREE])
 				return qfalse;
 			else if (level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_RED] && level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_FREE])
@@ -2053,7 +2051,7 @@ void CheckExitRules( void ) {
 		}
 	}
 
-	if ( level.numPlayingClients < 2 && !level.TeamCTF3Mode ) {
+	if ( level.numPlayingClients < 2 && !g_developer.integer ) {
 		return;
 	}
 
@@ -2115,7 +2113,7 @@ void CheckExitRules( void ) {
 			return;
 		}
 
-		if ((level.TeamCTF3Mode || g_allowFreeTeam.integer) && level.teamScores[TEAM_FREE] >= g_capturelimit.integer)
+		if (level.CTF3ModeActive && level.teamScores[TEAM_FREE] >= g_capturelimit.integer)
 		{
 			trap_SendServerCommand( -1, "print \"Yellow hit the capturelimit.\n\"" );
 			LogExit( "Capturelimit hit." );
@@ -2361,15 +2359,30 @@ void CheckTeamVote( int team ) {
 CheckCvars
 ==================
 */
+static int lastPasswordMod = -1;
+static int lastFreeTeamMod = -1;
+static int lastDeveloperMod = -1;
 void CheckCvars( void ) {
-	static int lastMod = -1;
-
-	if ( g_password.modificationCount != lastMod ) {
-		lastMod = g_password.modificationCount;
+	if ( g_password.modificationCount != lastPasswordMod ) {
+		lastPasswordMod = g_password.modificationCount;
 		if ( *g_password.string && Q_stricmp( g_password.string, "none" ) ) {
 			trap_Cvar_Set( "g_needpass", "1" );
 		} else {
 			trap_Cvar_Set( "g_needpass", "0" );
+		}
+	}
+
+	if (g_developer.modificationCount != lastDeveloperMod) {
+		lastDeveloperMod = g_developer.modificationCount;
+		if (g_developer.integer && (qboolean)g_allowFreeTeam.integer != level.CTF3ModeActive) { //debug
+			level.CTF3ModeActive = (qboolean)g_allowFreeTeam.integer;
+		}
+	}
+
+	if (g_allowFreeTeam.modificationCount != lastFreeTeamMod) {
+		lastFreeTeamMod = g_allowFreeTeam.modificationCount;
+		if (g_developer.integer) { //debug
+			level.CTF3ModeActive = (qboolean)g_allowFreeTeam.integer;
 		}
 	}
 }
@@ -2658,4 +2671,3 @@ const char *G_GetStripEdString(char *refSection, char *refName)
 	Com_sprintf(text, sizeof(text), "@@@%s", refName);
 	return text;
 }
-

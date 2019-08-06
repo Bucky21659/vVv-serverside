@@ -792,20 +792,18 @@ void SP_worldspawn( void )
 	G_SpawnString( "enableBreath", "0", &text );
 	trap_Cvar_Set( "g_enableBreath", text );
 
-#if TESTING
 	G_SpawnString("3TeamCTFSupported", "0", &text);
 	i = atoi(text);
 	if (i) {
 		trap_Cvar_Set("g_allowFreeTeam", text);
 		trap_Cvar_Update(&g_allowFreeTeam);
-		level.TeamCTF3Mode = qtrue;
+		level.CTF3ModeActive = qtrue;
 	}
 	else {
 		trap_Cvar_Set("g_allowFreeTeam", "0");
 		trap_Cvar_Update(&g_allowFreeTeam);
-		level.TeamCTF3Mode = qfalse;
+		level.CTF3ModeActive = qfalse;
 	}
-#endif
 
 	g_entities[ENTITYNUM_WORLD].s.number = ENTITYNUM_WORLD;
 	g_entities[ENTITYNUM_WORLD].classname = "worldspawn";
