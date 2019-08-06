@@ -1086,7 +1086,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	ent->s.isJediMaster = wasJediMaster;
 
 	// if this guy held a flag, let us know for how long he held it
-	if (self->client->ps.powerups[PW_REDFLAG] || self->client->ps.powerups[PW_BLUEFLAG]) {
+	if (self->client->ps.powerups[PW_REDFLAG] || self->client->ps.powerups[PW_BLUEFLAG] || self->client->ps.powerups[PW_NEUTRALFLAG]) {
 		const int holdtime = level.time - self->client->pers.teamState.flagsince;
 
 		ent->s.genericenemyindex = holdtime;	//this one has 32 bits

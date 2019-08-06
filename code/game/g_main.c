@@ -339,11 +339,15 @@ int vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int a
 					Team_ReturnFlag( TEAM_BLUE );
 					naughty = qtrue;
 				}
+				if (ent->client->ps.powerups[PW_NEUTRALFLAG]) {
+					Team_ReturnFlag( TEAM_FREE );
+					naughty = qtrue;
+				}
 			}
 
 			if (naughty) {
 				//we just returned flag instantly in above code, so make sure the flag doesnt drop to the ground in ClientDisconnect when hes kicked.
-				ent->client->ps.powerups[PW_BLUEFLAG] = ent->client->ps.powerups[PW_REDFLAG] = 0;
+				ent->client->ps.powerups[PW_BLUEFLAG] = ent->client->ps.powerups[PW_REDFLAG] = ent->client->ps.powerups[PW_NEUTRALFLAG] = 0;
 
 				G_SecurityLogPrint( "Flag eating attempt", ent );
 				trap_DropClient(arg0, "was kicked for trying to do very bad thing!");
@@ -1983,7 +1987,21 @@ qboolean ScoreIsTied( void ) {
 	}
 
 	if ( g_gametype.integer >= GT_TEAM ) {
-		return level.teamScores[TEAM_RED] == level.teamScores[TEAM_BLUE];
+		if (level.TeamCTF3Mode || g_allowFreeTeam.integer) {
+			if (level.teamScores[TEAM_RED] > level.teamScores[TEAM_BLUE] && level.teamScores[TEAM_RED] > level.teamScores[TEAM_FREE])
+				return qfalse;
+			else if (level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_RED] && level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_FREE])
+				return qfalse;
+			else if (level.teamScores[TEAM_FREE] > level.teamScores[TEAM_RED] && level.teamScores[TEAM_FREE] > level.teamScores[TEAM_BLUE])
+				return qfalse;
+			else if (level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_RED] && level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_FREE])
+				return qfalse;
+			else
+				return qtrue;
+		}
+		else {
+			return level.teamScores[TEAM_RED] == level.teamScores[TEAM_BLUE];
+		}
 	}
 
 	a = level.clients[level.sortedClients[0]].ps.persistant[PERS_SCORE];
@@ -2035,7 +2053,7 @@ void CheckExitRules( void ) {
 		}
 	}
 
-	if ( level.numPlayingClients < 2 ) {
+	if ( level.numPlayingClients < 2 && !level.TeamCTF3Mode ) {
 		return;
 	}
 
@@ -2093,6 +2111,13 @@ void CheckExitRules( void ) {
 
 		if ( level.teamScores[TEAM_BLUE] >= g_capturelimit.integer ) {
 			trap_SendServerCommand( -1, "print \"Blue hit the capturelimit.\n\"" );
+			LogExit( "Capturelimit hit." );
+			return;
+		}
+
+		if ((level.TeamCTF3Mode || g_allowFreeTeam.integer) && level.teamScores[TEAM_FREE] >= g_capturelimit.integer)
+		{
+			trap_SendServerCommand( -1, "print \"Yellow hit the capturelimit.\n\"" );
 			LogExit( "Capturelimit hit." );
 			return;
 		}

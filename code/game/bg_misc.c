@@ -1186,7 +1186,7 @@ Only in One Flag CTF games
 		NULL,
         { "models/flags/n_flag.md3",
 		0, 0, 0 },
-/* view */		NULL,			
+/* view */		NULL,
 /* icon */		"icons/iconf_neutral1",
 /* pickup *///	"Neutral Flag",
 		0,

@@ -2302,7 +2302,7 @@ void ForceTelepathy(gentity_t *self)
 	}
 
 	if (self->client->ps.powerups[PW_REDFLAG] ||
-		self->client->ps.powerups[PW_BLUEFLAG])
+		self->client->ps.powerups[PW_BLUEFLAG] || self->client->ps.powerups[PW_NEUTRALFLAG])
 	{ //can't mindtrick while carrying the flag
 		return;
 	}
@@ -3643,7 +3643,7 @@ static void WP_UpdateMindtrickEnts(gentity_t *self)
 		WP_ForcePowerStop(self, FP_TELEPATHY);
 	}
 	else if (self->client->ps.powerups[PW_REDFLAG] ||
-		self->client->ps.powerups[PW_BLUEFLAG])
+		self->client->ps.powerups[PW_BLUEFLAG] || self->client->ps.powerups[PW_NEUTRALFLAG])
 	{
 		WP_ForcePowerStop(self, FP_TELEPATHY);
 	}

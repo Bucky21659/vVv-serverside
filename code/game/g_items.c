@@ -556,7 +556,7 @@ static qboolean pas_find_enemies( gentity_t *self )
 		{
 			continue;
 		}
-		if ( self->noDamageTeam && target->client->sess.sessionTeam == self->noDamageTeam )
+		if ( g_gametype.integer >= GT_TEAM && target->client->sess.sessionTeam == self->noDamageTeam )
 		{
 			continue;
 		}
@@ -1670,9 +1670,10 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity, int ammoCo
 		dropped->s.angles[PITCH] = -90;
 	}
 
-	if (item->giTag != WP_BOWCASTER &&
+	if ((item->giType == IT_TEAM && item->giTag == PW_NEUTRALFLAG) || //LOL...
+		(item->giTag != WP_BOWCASTER &&
 		item->giTag != WP_DET_PACK &&
-		item->giTag != WP_THERMAL)
+		item->giTag != WP_THERMAL))
 	{
 		dropped->s.angles[ROLL] = -90;
 	}
@@ -1706,7 +1707,6 @@ gentity_t *Drop_Item( gentity_t *ent, gitem_t *item, float angle, int ammoCount 
 	AngleVectors( angles, velocity, NULL, NULL );
 	VectorScale( velocity, 150, velocity );
 	velocity[2] += 200 + crandom() * 50;
-
 
 	return LaunchItem( item, ent->s.pos.trBase, velocity, ammoCount );
 }

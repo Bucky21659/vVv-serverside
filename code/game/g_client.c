@@ -1280,7 +1280,7 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 		}
 
 		skin = strchr(model, '/');
-		if (skin && Q_stricmp(skin, "/default")) {
+		if (skin && Q_stricmpn(skin, "/default", 8)) {
 			Q_strncpyz(model, model, 1+strlen(model)-strlen(skin)); //terminate at the /
 			Q_strcat(model, sizeof(model), "/default"); //appends /default skin
 			Info_SetValueForKey(userinfo, "model", model);
