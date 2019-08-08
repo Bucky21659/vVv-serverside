@@ -108,7 +108,7 @@ vmCvar_t	g_logbs;
 vmCvar_t	g_developer;
 vmCvar_t	g_allowFreeTeam;
 vmCvar_t	g_maxTeamSize;
-vmCvar_t	g_fixSuicideScores;
+vmCvar_t	g_suicideScorePenalty;
 vmCvar_t	g_forceUniqueNames;
 vmCvar_t	g_enableChatBubble;
 
@@ -180,14 +180,13 @@ int gDuelist2 = -1;
 	{ &g_logbs, "g_logbs", "0", CVAR_ARCHIVE|CVAR_VVV, 0, qfalse, qfalse, "Log all d/bs events to disk"  },
 	#endif
 
-
 	{ &g_fairflag, "g_fairflag", "1", CVAR_VVV|CVAR_ARCHIVE, 0, qfalse, qfalse, "If the setting is enabled: in situations where more than one player is standing/touching a ctf flag, checks will be made to ensure that the guy standing closest to it will get/cap it, as an alternative to randomness deciding who should get it."  },
 	{ &g_allowChatPause, "g_allowChatPause", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qfalse, qfalse, "Players not on spectator team can pause/unpause the game by using !pause and !unpause in chat."  },
 
 	{ &g_developer, "developer", "0", CVAR_TEMP, 0, qfalse, qfalse, "" },
 	{ &g_allowFreeTeam, "g_allowFreeTeam", "0", CVAR_VVV|CVAR_TEMP|CVAR_SERVERINFO, 0, qfalse, qfalse, "Configstring indicating that server is running 3 team CTF mode" },
 	{ &g_maxTeamSize, "g_maxTeamSize", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "If set, specifies a maximum players allowed on each team." },
-	{ &g_fixSuicideScores, "g_fixSuicideScores", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Does not subtract score from player when they suicide with /kill." },
+	{ &g_suicideScorePenalty, "g_suicideScorePenalty", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Enables/disables score penanlty given to players after they suicide using /kill. 0: No penalty - 1: baseJK2 behavior" },
 	{ &g_forceUniqueNames, "g_forceUniqueNames", "1", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Disallows more than one player to have the same name, additionally appends client number to \"Padawan\" names." },
 	{ &g_enableChatBubble, "g_enableChatBubble", "1", CVAR_VVV, 0, qtrue, qfalse, "" },
 

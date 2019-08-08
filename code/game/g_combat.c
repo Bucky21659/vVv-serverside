@@ -1032,7 +1032,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	if (meansOfDeath == MOD_SUICIDECMD)
 	{
-		if (g_fixSuicideScores.integer && (g_gametype.integer != GT_TOURNAMENT || g_fixSuicideScores.integer == 2))
+		if (!g_suicideScorePenalty.integer && g_gametype.integer != GT_TOURNAMENT)
 			scoreDeath = qfalse;
 		meansOfDeath = MOD_SUICIDE;
 	}

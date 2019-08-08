@@ -1173,7 +1173,7 @@ extern	vmCvar_t	g_logbs;
 
 extern	vmCvar_t	g_developer;
 extern	vmCvar_t	g_maxTeamSize;
-extern	vmCvar_t	g_fixSuicideScores;
+extern	vmCvar_t	g_suicideScorePenalty;
 extern	vmCvar_t	g_forceUniqueNames;
 extern	vmCvar_t	g_allowFreeTeam;
 
