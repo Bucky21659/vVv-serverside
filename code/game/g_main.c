@@ -119,7 +119,7 @@ int gDuelist2 = -1;
 /* static */ cvarTable_t		gameCvarTable[] = {
 	// don't override the cheat state set by the system
 	{ &g_cheats, "sv_cheats", "", 0, 0, qfalse },
-	{ &g_fps, "sv_fps", "", 0, 0, qtrue },
+	{ &g_fps, "sv_fps", "", CVAR_SERVERINFO, 0, qtrue },
 	{ &g_timescale, "timescale", "", 0, 0, qtrue },
 
 	// noset vars
@@ -1987,15 +1987,7 @@ qboolean ScoreIsTied( void ) {
 
 	if ( g_gametype.integer >= GT_TEAM ) {
 		if (level.CTF3ModeActive) {
-			if (level.teamScores[TEAM_RED] > level.teamScores[TEAM_BLUE] && level.teamScores[TEAM_RED] > level.teamScores[TEAM_FREE])
-				return qfalse;
-			else if (level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_RED] && level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_FREE])
-				return qfalse;
-			else if (level.teamScores[TEAM_FREE] > level.teamScores[TEAM_RED] && level.teamScores[TEAM_FREE] > level.teamScores[TEAM_BLUE])
-				return qfalse;
-			else if (level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_RED] && level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_FREE])
-				return qfalse;
-			else
+			if (level.teamScores[TEAM_RED] == level.teamScores[TEAM_BLUE] && level.teamScores[TEAM_RED] == level.teamScores[TEAM_FREE] && level.teamScores[TEAM_BLUE] == level.teamScores[TEAM_FREE])
 				return qtrue;
 		}
 		else {

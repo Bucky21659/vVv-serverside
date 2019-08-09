@@ -807,30 +807,126 @@ PickTeam
 ================
 */
 team_t PickTeam( int ignoreClientNum ) {
-	int	counts[TEAM_NUM_TEAMS] = { 0 }, scores[TEAM_NUM_TEAMS] = { 0 };
-	int	lowestScore, lowestCount;
+	int		counts[TEAM_NUM_TEAMS] = { 0 }, scores[TEAM_NUM_TEAMS] = { 0 };
+	int		w, lowestScore = 0, lowestCount = 0;
 
-	counts[TEAM_BLUE] = TeamCount( ignoreClientNum, TEAM_BLUE );
-	counts[TEAM_RED] = TeamCount( ignoreClientNum, TEAM_RED );
-
-	scores[TEAM_BLUE] = level.teamScores[TEAM_BLUE];
-	scores[TEAM_RED] = level.teamScores[TEAM_RED];
-
-	lowestScore = min(scores[TEAM_RED], scores[TEAM_BLUE]);
-	lowestCount = min(counts[TEAM_RED], counts[TEAM_BLUE]);
-
-	if ( counts[TEAM_RED] == counts[TEAM_BLUE] ) { //same player count
-		if (scores[TEAM_RED] == scores[TEAM_BLUE]) //score is tied
-			return Q_irand(TEAM_RED, TEAM_BLUE); //so pick one at random
-		else
-			return (min(scores[TEAM_RED], scores[TEAM_BLUE]) == scores[TEAM_RED] ? TEAM_RED : TEAM_BLUE); //return whoever's behind
+	for (w = 0; w < TEAM_SPECTATOR; w++) {
+		counts[w] = TeamCount(ignoreClientNum, w);
+		scores[w] = level.teamScores[w];
 	}
-	if ( min(counts[TEAM_RED], counts[TEAM_BLUE]) == counts[TEAM_RED] ) {
+	
+	if (!level.CTF3ModeActive)
+	{
+		lowestScore = min(scores[TEAM_RED], scores[TEAM_BLUE]);
+		lowestCount = min(counts[TEAM_RED], counts[TEAM_BLUE]);
+
+		if ( counts[TEAM_RED] == counts[TEAM_BLUE] ) { //same player count
+			if (scores[TEAM_RED] == scores[TEAM_BLUE]) //score is tied
+				return Q_irand(TEAM_RED, TEAM_BLUE); //so pick one at random
+			else
+				return (min(scores[TEAM_RED], scores[TEAM_BLUE]) == scores[TEAM_RED] ? TEAM_RED : TEAM_BLUE); //return whoever's behind
+		}
+		if ( min(counts[TEAM_RED], counts[TEAM_BLUE]) == counts[TEAM_RED] ) {
+			return TEAM_RED;
+		}
+		return TEAM_BLUE;
+	}
+
+	//horrific messs below
+	//calculates which team has the least amount of players and which team has the worst score
+	//tries to select team with the lowest playercount, then selects team with worst score
+	//if two teams are tied when trying to pick one based on player count, it selects one of the two at random
+	lowestScore = min(min(scores[TEAM_RED], scores[TEAM_BLUE]), scores[TEAM_FREE]);
+	lowestCount = min(min(counts[TEAM_RED], counts[TEAM_BLUE]), counts[TEAM_FREE]);
+
+	if (lowestCount && lowestCount == counts[TEAM_RED] && lowestCount == counts[TEAM_BLUE] && lowestCount == counts[TEAM_FREE])
+		lowestCount = 0;
+	if (lowestScore && lowestScore == scores[TEAM_RED] && lowestScore == scores[TEAM_BLUE] && lowestScore == scores[TEAM_FREE])
+		lowestScore = 0;
+
+	if (counts[TEAM_RED] == counts[TEAM_BLUE] && counts[TEAM_RED] == counts[TEAM_FREE])
+	{ //equal player count
+		if (scores[TEAM_RED] == scores[TEAM_BLUE] && scores[TEAM_BLUE] == scores[TEAM_FREE]) { //all tied up...
+			return Q_irand(TEAM_FREE, TEAM_BLUE); //select at random since everyone is even
+		}
+
+		if (lowestScore == scores[TEAM_RED]) {  //checks if the lowest score count is tied with another team and chooses one of the two accordingly
+			if (scores[TEAM_RED] == scores[TEAM_BLUE])
+				return (rand()%2 ? TEAM_RED : TEAM_BLUE);
+			if (scores[TEAM_RED] == scores[TEAM_FREE])
+				return (rand()%2 ? TEAM_RED : TEAM_FREE);
+			return TEAM_RED;
+		}
+
+		if (lowestScore == scores[TEAM_BLUE]) {
+			if (scores[TEAM_BLUE] == scores[TEAM_FREE])
+				return (rand()%2 ? TEAM_BLUE : TEAM_FREE);
+			return TEAM_BLUE;
+		}
+
+		if (lowestScore == scores[TEAM_FREE]) { //ties with other teams are already checked above
+			return TEAM_FREE;
+		}
+
+	}
+
+	//if one team is outnumbered by both of the other two, then join it
+	if (counts[TEAM_RED] < counts[TEAM_BLUE] && counts[TEAM_RED] < counts[TEAM_FREE]) {
 		return TEAM_RED;
 	}
-	return TEAM_BLUE;
-}
 
+	if (counts[TEAM_BLUE] < counts[TEAM_RED] && counts[TEAM_BLUE] < counts[TEAM_FREE]) {
+		return TEAM_BLUE;
+	}
+
+	if (counts[TEAM_FREE] < counts[TEAM_RED] && counts[TEAM_FREE] < counts[TEAM_BLUE]) {
+		return TEAM_FREE;
+	}
+
+	//check for a team to join based on player count one more time
+	if (lowestCount == counts[TEAM_RED]) {  //checks if our count is tied with another team and randomly selects it if so - wouldn't this encompass the explicit checks above, as well?
+		if (counts[TEAM_RED] == counts[TEAM_BLUE])
+			return (rand()%2 ? TEAM_RED : TEAM_BLUE);
+		else if (counts[TEAM_RED] == counts[TEAM_FREE])
+			return (rand()%2 ? TEAM_RED : TEAM_FREE);
+		return TEAM_RED;
+	}
+
+	if (lowestCount == counts[TEAM_BLUE]) {
+		if (counts[TEAM_BLUE] == counts[TEAM_FREE])
+			return (rand()%2 ? TEAM_BLUE : TEAM_FREE);
+		return TEAM_BLUE;
+	}
+
+	if (lowestCount == counts[TEAM_FREE]) {
+		return TEAM_FREE;
+	}
+	//okay so if the teams needed to be balanced then that should have already been handled
+	if (scores[TEAM_RED] == scores[TEAM_BLUE] && scores[TEAM_RED] == scores[TEAM_FREE]) { //check if we have a 3 way tie again
+		return Q_irand(TEAM_FREE, TEAM_BLUE);
+	}
+
+	if (lowestScore == scores[TEAM_RED]) {
+		if (scores[TEAM_RED] == scores[TEAM_BLUE])
+			return (rand()%2 ? TEAM_RED : TEAM_BLUE);
+		if (scores[TEAM_RED] == scores[TEAM_FREE])
+			return (rand()%2 ? TEAM_RED : TEAM_FREE);
+		return TEAM_RED;
+	}
+
+	if (lowestScore == scores[TEAM_BLUE]) {
+		if (scores[TEAM_BLUE] == scores[TEAM_FREE])
+			return (rand()%2 ? TEAM_BLUE : TEAM_FREE);
+		return TEAM_BLUE;
+	}
+
+	if (lowestScore == scores[TEAM_FREE]) {
+		return TEAM_FREE;
+	}
+
+	return Q_irand(TEAM_FREE, TEAM_BLUE); //pick one of the 3 teams at random
+	//return TEAM_FREE;
+}
 
 /*
 ===========
@@ -1238,12 +1334,14 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 	// bots set their team a few frames later
 	if (g_gametype.integer >= GT_TEAM && g_entities[clientNum].r.svFlags & SVF_BOT) {
 		s = Info_ValueForKey( userinfo, "team" );
-		if ( !Q_stricmp( s, "red" ) || !Q_stricmp( s, "r" ) )
+		if ( !Q_stricmp( s, "r" ) || !Q_stricmp( s, "red" ) )
 			team = TEAM_RED;
-		else if ( !Q_stricmp( s, "blue" ) || !Q_stricmp( s, "b" ) )
+		else if ( !Q_stricmp( s, "b" ) || !Q_stricmp( s, "blue" ) )
 			team = TEAM_BLUE;
 		else if (!Q_stricmp(s, "s") || !Q_stricmpn(s, "spec", 4))	//add
 			team = TEAM_SPECTATOR;
+		else if (level.CTF3ModeActive && (!Q_stricmp(s, "y") || !Q_stricmp(s, "yellow")))
+			team = TEAM_FREE;
 		else
 			team = PickTeam( clientNum );		// pick the team with the least number of players
 	}

@@ -364,7 +364,6 @@ forceteam <player> <team>
 
 const char *TeamName(int team) ;
 
-
 static void Svcmd_LockUserinfo_f (void) {
 	char		buf[128];
 	int cl;
@@ -399,34 +398,55 @@ static void Svcmd_LockUserinfo_f (void) {
 	}
 }
 
-const char *G_TeamNameColoured(const int team)  {
-	if (team==TEAM_RED)
-		return "^1RED";
-	else if (team==TEAM_BLUE)
-		return "^4BLUE";
-	else if (team==TEAM_SPECTATOR)
-		return "^3SPECTATOR";
-	else if (team==TEAM_PLAYING)
-		return "^5PLAYERS";
-
-	return "FREE";
+const char *G_TeamNameColoured(const int team)
+{
+	switch (team)
+	{
+		case TEAM_RED:
+			return S_COLOR_RED "RED";
+			break;
+		case TEAM_BLUE:
+			return S_COLOR_BLUE "BLUE";
+			break;
+		case TEAM_SPECTATOR:
+			return level.CTF3ModeActive ? S_COLOR_GREEN "SPECTATOR" : S_COLOR_YELLOW "SPECTATOR";
+			break;
+		case TEAM_PLAYING:
+			return S_COLOR_CYAN "PLAYERS";
+			break;
+		case TEAM_FREE:
+			if (level.CTF3ModeActive) {
+				return S_COLOR_YELLOW "YELLOW";
+				break;
+			}
+		default:
+			return "FREE";
+			break;
+	}
 }
 
-int G_TeamForString (const char *str, qboolean allowTeamPlaying) {
-
+int G_TeamForString(const char *str, qboolean allowTeamPlaying) {
 	if (!Q_stricmp(str, "b") || !Q_stricmp(str, "blue")) {
 		return TEAM_BLUE;
 	}
 	if (!Q_stricmp(str, "r") || !Q_stricmp(str, "red")) {
 		return TEAM_RED;
 	}
+	if (level.CTF3ModeActive && g_gametype.integer >= GT_TEAM) {
+		if (!Q_stricmp(str, "y") || !Q_stricmp(str, "yellow")) {
+			return TEAM_FREE;
+		}
+		if (!Q_stricmp(str, "f") || !Q_stricmp(str, "a") || !Q_stricmp(str, "free") || !Q_stricmp(str, "auto")) {
+			return TEAM_PLAYING; //doing it this way since PickTeam probably should be called with an ignore client num
+		}
+	}
 	if (!Q_stricmp(str, "s") || !Q_stricmpn(str, "spec", 4)) {
 		return TEAM_SPECTATOR;
 	}
-	if (!Q_stricmp(str, "free") || !Q_stricmp(str, "f")) {
+	if (!Q_stricmp(str, "f") || !Q_stricmp(str, "free")) {
 		return TEAM_FREE;
 	}
-	if (allowTeamPlaying && (!Q_stricmp(str, "playing") || !Q_stricmp(str, "p"))) {
+	if (allowTeamPlaying && !Q_stricmp(str, "p") || (!Q_stricmp(str, "playing"))) {
 		return TEAM_PLAYING;
 	}
 
@@ -619,7 +639,6 @@ static void Svcmd_ForceTeam_f( void ) {
 		G_Printf("He is already on team %s^7.\n", G_TeamNameColoured(i));
 		return;
 	}
-
 
 	// set the team
 	if (G_IsBot(num))

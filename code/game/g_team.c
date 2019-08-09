@@ -47,14 +47,28 @@ int OtherTeam(int team) {
 	return team;
 }
 
-const char *TeamName(int team)  {
-	if (team==TEAM_RED)
-		return "RED";
-	else if (team==TEAM_BLUE)
-		return "BLUE";
-	else if (team==TEAM_SPECTATOR)
-		return "SPECTATOR";
-	return "FREE";
+const char *TeamName(int team)
+{
+	switch (team)
+	{
+		case TEAM_RED:
+			return "RED";
+			break;
+		case TEAM_BLUE:
+			return "BLUE";
+			break;
+		case TEAM_SPECTATOR:
+			return "SPECTATOR";
+			break;
+		case TEAM_FREE:
+			if (level.CTF3ModeActive) {
+				return "YELLOW";
+				break;
+			}
+		default:
+			return "FREE";
+			break;
+	}
 }
 
 const char *OtherTeamName(int team) {
@@ -68,13 +82,26 @@ const char *OtherTeamName(int team) {
 }
 
 const char *TeamColorString(int team) {
-	if (team==TEAM_RED)
-		return S_COLOR_RED;
-	else if (team==TEAM_BLUE)
-		return S_COLOR_BLUE;
-	else if (team==TEAM_SPECTATOR)
-		return S_COLOR_YELLOW;
-	return S_COLOR_WHITE;
+	switch (team)
+	{
+		case TEAM_RED:
+			return S_COLOR_RED;
+			break;
+		case TEAM_BLUE:
+			return S_COLOR_BLUE;
+			break;
+		case TEAM_SPECTATOR:
+			return level.CTF3ModeActive ? S_COLOR_GREEN : S_COLOR_YELLOW;
+			break;
+		case TEAM_FREE:
+			if (level.CTF3ModeActive) {
+				return S_COLOR_YELLOW;
+				break;
+			}
+		default:
+			return S_COLOR_WHITE;
+			break;
+	}
 }
 
 // NULL for everyone
@@ -230,24 +257,23 @@ static char ctfFlagStatusRemap[] = { '0', '1', '*', '*', '2' };
 void Team_SetFlagStatus( int team, flagStatus_t status ) {
 	qboolean modified = qfalse;
 
-	switch( team ) {
-	case TEAM_RED:	// CTF
-		if( teamgame.redStatus != status ) {
-			teamgame.redStatus = status;
-			modified = qtrue;
-		}
-		break;
-
-	case TEAM_BLUE:	// CTF
-		if( teamgame.blueStatus != status ) {
-			teamgame.blueStatus = status;
-			modified = qtrue;
-		}
-		break;
-
-	case TEAM_FREE:	// One Flag CTF
-		if( teamgame.flagStatus != status ) {
-			teamgame.flagStatus = status;
+	switch( team )
+	{
+		case TEAM_RED:	// CTF
+			if( teamgame.redStatus != status ) {
+				teamgame.redStatus = status;
+				modified = qtrue;
+			}
+			break;
+		case TEAM_BLUE:	// CTF
+			if( teamgame.blueStatus != status ) {
+				teamgame.blueStatus = status;
+				modified = qtrue;
+			}
+			break;
+		case TEAM_FREE:	// One Flag CTF
+			if( teamgame.flagStatus != status ) {
+				teamgame.flagStatus = status;
 			modified = qtrue;
 		}
 		break;

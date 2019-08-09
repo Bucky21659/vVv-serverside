@@ -523,8 +523,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 			team = TEAM_RED;
 		} else if ( !Q_stricmp( s, "blue" ) || !Q_stricmp( s, "b" ) ) {
 			team = TEAM_BLUE;
-		} else if (level.CTF3ModeActive && (!Q_stricmp(s, "free") || !Q_stricmp(s, "f"))
-		{
+		} else if (level.CTF3ModeActive && (!Q_stricmp(s, "y") || !Q_stricmp(s, "yellow"))) {
 			team = TEAM_FREE;
 		} else {
 			team = PickTeam( clientNum );
@@ -682,6 +681,25 @@ qboolean SetTeam_Bot (gentity_t *ent, const char *s) {
 	if (team == -1)
 		return qfalse;
 
+	if (level.CTF3ModeActive && team == TEAM_PLAYING) {
+		team = PickTeam(ent->s.clientNum);
+		if (team == -1)
+			return qfalse;
+
+		switch (team) {
+			case TEAM_RED:
+				s = "r";
+				break;
+			case TEAM_BLUE:
+				s = "b";
+				break;
+			default:
+			case TEAM_FREE:
+				s = "y";
+				break;
+		}
+	}
+
 	oldTeam = ent->client->sess.sessionTeam;
 
 	trap_GetUserinfo( ent->s.number, userinfo, sizeof( userinfo ) );
@@ -733,50 +751,72 @@ qboolean SetTeam_User( gentity_t *ent, const char *s ) {
 	}
 	#endif
 
-	if ( (newTeam = G_TeamForString(s, qfalse)) == -1) {
+	newTeam = G_TeamForString(s, qfalse);
+	if (level.CTF3ModeActive && g_gametype.integer >= GT_TEAM && newTeam == TEAM_PLAYING) { //auto assigned?
+		newTeam = PickTeam(ent->s.clientNum);
+	}
+
+	if (newTeam == -1) {
 		G_SendClientPrint( ent - g_entities, "Unknown team '%s'.\n", s);
 		return qfalse;
 	}
 
+	if (g_gametype.integer >= GT_TEAM && level.CTF3ModeActive) { //set the string here to avoid hitting the PickTeam function redundantly - affects the RNG
+		switch (newTeam) {
+			case TEAM_RED:
+				s = "r";
+				break;
+			case TEAM_BLUE:
+				s = "b";
+				break;
+			case TEAM_FREE:
+				s = "y";
+				break;
+			case TEAM_SPECTATOR:
+				s = "s";
+				break;
+		}
+	}
 
-
-	if ( ent->client->switchTeamTime > level.time ) {
+	if ( ent->client->switchTeamTime > level.time && !g_developer.integer ) {
 		G_SendClientPrint( ent-g_entities, "%s\n", G_GetStripEdString("SVINGAME", "NOSWITCH") );
 		return qfalse;
 	}
-
 
 	if (level.lockedTeams & (1 << newTeam)) {
 		G_SendClientPrint( ent-g_entities, "That team is locked.\n" );
 		return qfalse;
 	}
 
-	if (level.lockedTeams && newTeam == TEAM_FREE && g_gametype.integer >= GT_TEAM) {
+	if (g_gametype.integer >= GT_TEAM && level.lockedTeams && (!level.CTF3ModeActive && newTeam == TEAM_FREE)) {
 		//prevent players from using team free which will assign players to either blue or red in team games,
 		//when those teams are locked
-
 		if ( !(level.lockedTeams & (1 << TEAM_RED)) )
 			found = "r";
 		else if ( !(level.lockedTeams & (1 << TEAM_BLUE)) )
 			found = "b";
+		else if ( level.CTF3ModeActive && !(level.lockedTeams & (1 << TEAM_FREE)) ) //fixme
+			found = "y";
 		else
 			found = NULL;
 
 		if (!found) {
-			G_SendClientPrint( ent-g_entities, "Teams ^1RED^7 and ^4BLUE^7 are both locked.\n" );
+			if (level.CTF3ModeActive)
+				G_SendClientPrint( ent-g_entities, S_COLOR_WHITE "All teams are locked!\n" );
+			else
+				G_SendClientPrint( ent-g_entities, S_COLOR_WHITE "Teams " S_COLOR_RED "RED " S_COLOR_WHITE "and " S_COLOR_BLUE "BLUE " S_COLOR_WHITE "are both locked.\n" );
 			return qfalse;
 		}
 
 		s = found;
 	}
 
-
 	// if they are playing a tournement game, count as a loss
-	if ( (g_gametype.integer == GT_TOURNAMENT ) && oldTeam == TEAM_FREE ) {
+	if ( (g_gametype.integer == GT_TOURNAMENT) && oldTeam == TEAM_FREE ) {
 		ent->client->sess.losses++;
 	}
 
-	//all checks parsed, he can change team
+	//all checks passed, he can change team
 	SetTeam( ent, (char*)s );
 	ent->client->switchTeamTime = level.time + 3000;	// MOVED and reduced time from 5000
 	return qtrue;
@@ -2299,7 +2339,6 @@ static void Cmd_AltFolow_f( gentity_t *ent ) {
 		return;
 	}
 
-
 	//setting persists through maprestarts
 	ent->client->sess.amflags ^= AMFLAG_ALTFOLLOW;
 	if (ent->client->sess.amflags & AMFLAG_ALTFOLLOW)
@@ -2396,14 +2435,14 @@ clientCommand_t clientCommands[] = {
 	{ "thedestroyer",		NULL, NULL, Cmd_TheDestroyer_f,			CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "vote",				NULL, NULL, Cmd_Vote_f,					CMD_NOINTERMISSION },
 
-	{"clientstatus", "[team]", "Print a list of players on the server.", Cmd_ClientStatus_f, 0 },
-    {"specs", "", "Print a list of spectators and whom they are spectating.", Cmd_SpectatorList_f, CMD_NOINTERMISSION },
-    {"ignore", "<client or 'all'>", "Ignore/unignore a player or everyone.", Cmd_Ignore_f, 0 },
-    {"ignorelist", "", "Print a list of players you have on ignore.", Cmd_IgnoreList_f, 0 },
-    {"ignoreclear", "", "Remove all players from your ignorelist.", Cmd_IgnoreClear_f, 0 },
-    {"altf", "", "Toggle being able to use alt-attack to spec the previous player.", Cmd_AltFolow_f, CMD_NOINTERMISSION },
-	{"afk", "", "See a list of players who haven't touched any buttons lately.", Cmd_AfkList_f, CMD_NOINTERMISSION },
-    {HELP_CMD, "", NULL/*"Display this list."*/, Cmd_Help_f, 0 },
+	{ "clientstatus", "[team]", "Print a list of players on the server.", Cmd_ClientStatus_f, 0 },
+    { "specs", "", "Print a list of spectators and whom they are spectating.", Cmd_SpectatorList_f, CMD_NOINTERMISSION },
+    { "ignore", "<client or 'all'>", "Ignore/unignore a player or everyone.", Cmd_Ignore_f, 0 },
+    { "ignorelist", "", "Print a list of players you have on ignore.", Cmd_IgnoreList_f, 0 },
+    { "ignoreclear", "", "Remove all players from your ignorelist.", Cmd_IgnoreClear_f, 0 },
+    { "altf", "", "Toggle being able to use alt-attack to spec the previous player.", Cmd_AltFolow_f, CMD_NOINTERMISSION },
+	{ "afk", "", "See a list of players who haven't touched any buttons lately.", Cmd_AfkList_f, CMD_NOINTERMISSION },
+    { HELP_CMD, "", NULL/*"Display this list."*/, Cmd_Help_f, 0 },
 };
 
 static const size_t numCommands = ARRAY_LEN( clientCommands );
