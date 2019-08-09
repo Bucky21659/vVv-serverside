@@ -807,19 +807,25 @@ PickTeam
 ================
 */
 team_t PickTeam( int ignoreClientNum ) {
-	int		counts[TEAM_NUM_TEAMS];
+	int	counts[TEAM_NUM_TEAMS] = { 0 }, scores[TEAM_NUM_TEAMS] = { 0 };
+	int	lowestScore, lowestCount;
 
 	counts[TEAM_BLUE] = TeamCount( ignoreClientNum, TEAM_BLUE );
 	counts[TEAM_RED] = TeamCount( ignoreClientNum, TEAM_RED );
 
-	if ( counts[TEAM_BLUE] > counts[TEAM_RED] ) {
-		return TEAM_RED;
+	scores[TEAM_BLUE] = level.teamScores[TEAM_BLUE];
+	scores[TEAM_RED] = level.teamScores[TEAM_RED];
+
+	lowestScore = min(scores[TEAM_RED], scores[TEAM_BLUE]);
+	lowestCount = min(counts[TEAM_RED], counts[TEAM_BLUE]);
+
+	if ( counts[TEAM_RED] == counts[TEAM_BLUE] ) { //same player count
+		if (scores[TEAM_RED] == scores[TEAM_BLUE]) //score is tied
+			return Q_irand(TEAM_RED, TEAM_BLUE); //so pick one at random
+		else
+			return (min(scores[TEAM_RED], scores[TEAM_BLUE]) == scores[TEAM_RED] ? TEAM_RED : TEAM_BLUE); //return whoever's behind
 	}
-	if ( counts[TEAM_RED] > counts[TEAM_BLUE] ) {
-		return TEAM_BLUE;
-	}
-	// equal team count, so join the team with the lowest score
-	if ( level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_RED] ) {
+	if ( min(counts[TEAM_RED], counts[TEAM_BLUE]) == counts[TEAM_RED] ) {
 		return TEAM_RED;
 	}
 	return TEAM_BLUE;
