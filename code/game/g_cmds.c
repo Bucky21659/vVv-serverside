@@ -2230,37 +2230,6 @@ const char *G_Argv(int arg) {
 	return &buf[0];
 }
 
-void *bsearch(const void *key, const void *base, size_t num, size_t width, int (*compare)(const void *, const void *)) {
-	char *lo = (char *) base;
-	char *hi = (char *) base + (num - 1) * width;
-	char *mid;
-	unsigned int half;
-	int result;
-
-	while (lo <= hi) {
-		if (half = num / 2) {
-			mid = lo + (num & 1 ? half : (half - 1)) * width;
-
-			if (!(result = (*compare)(key,mid))) {
-				return mid;
-			} else if (result < 0) {
-				hi = mid - width;
-				num = num & 1 ? half : half - 1;
-			} else {
-				lo = mid + width;
-				num = half;
-			}
-
-		} else if (num) {
-			return ((*compare)(key, lo) ? NULL : lo);
-		} else {
-			break;
-		}
-	}
-
-	return NULL;
-}
-
 /*
 =================
 ClientCommand
@@ -2406,11 +2375,6 @@ typedef struct command_s {
 	int			flags;
 } clientCommand_t;
 
-//for bsearch
-int cmdcmp( const void *a, const void *b ) {
-	return Q_stricmp( (const char *)a, ((clientCommand_t*)b)->name );
-}
-
 static void Cmd_Help_f (gentity_t *ent);
 clientCommand_t clientCommands[] = {
 	{ "addbot",				NULL, NULL, Cmd_AddBot_f,				0 },
@@ -2436,13 +2400,13 @@ clientCommand_t clientCommands[] = {
 	{ "vote",				NULL, NULL, Cmd_Vote_f,					CMD_NOINTERMISSION },
 
 	{ "clientstatus", "[team]", "Print a list of players on the server.", Cmd_ClientStatus_f, 0 },
-    { "specs", "", "Print a list of spectators and whom they are spectating.", Cmd_SpectatorList_f, CMD_NOINTERMISSION },
-    { "ignore", "<client or 'all'>", "Ignore/unignore a player or everyone.", Cmd_Ignore_f, 0 },
-    { "ignorelist", "", "Print a list of players you have on ignore.", Cmd_IgnoreList_f, 0 },
-    { "ignoreclear", "", "Remove all players from your ignorelist.", Cmd_IgnoreClear_f, 0 },
-    { "altf", "", "Toggle being able to use alt-attack to spec the previous player.", Cmd_AltFolow_f, CMD_NOINTERMISSION },
+	{ "specs", "", "Print a list of spectators and whom they are spectating.", Cmd_SpectatorList_f, CMD_NOINTERMISSION },
+	{ "ignore", "<client or 'all'>", "Ignore/unignore a player or everyone.", Cmd_Ignore_f, 0 },
+	{ "ignorelist", "", "Print a list of players you have on ignore.", Cmd_IgnoreList_f, 0 },
+	{ "ignoreclear", "", "Remove all players from your ignorelist.", Cmd_IgnoreClear_f, 0 },
+	{ "altf", "", "Toggle being able to use alt-attack to spec the previous player.", Cmd_AltFolow_f, CMD_NOINTERMISSION },
 	{ "afk", "", "See a list of players who haven't touched any buttons lately.", Cmd_AfkList_f, CMD_NOINTERMISSION },
-    { HELP_CMD, "", NULL/*"Display this list."*/, Cmd_Help_f, 0 },
+	{ HELP_CMD, "", NULL/*"Display this list."*/, Cmd_Help_f, 0 },
 };
 
 static const size_t numCommands = ARRAY_LEN( clientCommands );
@@ -2469,6 +2433,10 @@ static void Cmd_Help_f ( gentity_t *ent )
 		G_SendClientPrint(entNum, "Pausing/unpausing is currently enabled. Game can be paused by typing ^1!pause^7 in chat, and unpaused by ^1!unpause^7.\n");
 }
 
+//For Q_LinearSearch
+static int cmdcmp( const void *a, const void *b ) {
+	return Q_stricmp( (const char *)a, ((clientCommand_t*)b)->name );
+}
 
 //For qsort
 int cmdcmp2( const void *a, const void *b ) {
@@ -2502,7 +2470,7 @@ void ClientCommand( int clientNum ) {
 	if (G_StringStartsWithCaseIns(cmd, "bot_") && AcceptBotCommand(cmd, ent))
 		return;
 
-	command = (clientCommand_t *)bsearch( cmd, clientCommands, numCommands, sizeof( clientCommands[0] ), cmdcmp );
+	command = (clientCommand_t *)Q_LinearSearch( cmd, clientCommands, numCommands, sizeof( clientCommands[0] ), cmdcmp );
 	if ( !command )	{
 		G_SendClientPrint( clientNum, "Unknown command ~%s~\n", ShortString(cmd) );
 	}

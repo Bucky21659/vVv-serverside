@@ -1293,6 +1293,9 @@ int Q_irand(int value1, int value2)
 	return r;
 }
 
+#ifdef RAND_MAX
+#undef RAND_MAX
+#endif
 #define RAND_MAX 32000
 void Q_shuffle(int *array, size_t n)
 {
@@ -1307,6 +1310,18 @@ void Q_shuffle(int *array, size_t n)
           array[i] = t;
         }
     }
+}
+
+void *Q_LinearSearch( const void *key, const void *ptr, size_t count,
+	size_t size, cmpFunc_t cmp )
+{
+	size_t i;
+	for ( i = 0; i < count; i++ )
+	{
+		if ( cmp( key, ptr ) == 0 ) return (void *)ptr;
+		ptr = (const char *)ptr + size;
+	}
+	return NULL;
 }
 
 //====================================================================

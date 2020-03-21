@@ -3,4 +3,18 @@
 *.map
 *.pk3
 
-code/game/.vs/
+*.dll
+*.so
+
+#Visual Studio files
+*.vs/
+*.tlog/
+*.vcxproj.FileListAbsolute.txt
+*vcxproj.user
+*.exp
+*.ilk
+*.lib
+*.pdb
+*.obj
+*.log
+*.idb

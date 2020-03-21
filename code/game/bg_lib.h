@@ -3,7 +3,9 @@
 
 // This file is NOT included on native builds
 
-typedef int size_t;
+typedef int intptr_t;
+
+typedef unsigned int size_t;
 
 typedef char *  va_list;
 #define _INTSIZEOF(n)   ( (sizeof(n) + sizeof(int) - 1) & ~(sizeof(int) - 1) )

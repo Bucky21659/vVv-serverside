@@ -1393,11 +1393,11 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 	}
 
 	s = Info_ValueForKey(userinfo, "cjp_client");
-	if (s && !Q_stricmpn(s, "1.4JAPRO", 8)) {
+	if (VALIDSTRING(s) && !Q_stricmpn(s, "1.4JAPRO", 8)) {
 		client->sess.amflags |= AMFLAG_PLUGINDETECTED;
 	}
 	else {
-		client->sess.amflags &= AMFLAG_PLUGINDETECTED;
+		client->sess.amflags &= ~AMFLAG_PLUGINDETECTED;
 	}
 
 	Q_strncpyz(redTeam, Info_ValueForKey( userinfo, "g_redteam" ), sizeof(redTeam));
@@ -1483,7 +1483,7 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		//OpenJK add
 		if ( !OkRealIP[0] )
 		{//No IP sent when connecting, probably an unban hack attempt
-			client->pers.connected = CON_DISCONNECTED;
+			//client->pers.connected = CON_DISCONNECTED;
 			G_SecurityLogPrint( "Client sent no IP when connecting", &g_entities[clientNum] );
 			return "Bad userinfo";
 		}

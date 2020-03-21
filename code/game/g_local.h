@@ -24,8 +24,6 @@
 typedef struct gentity_s gentity_t;
 typedef struct gclient_s gclient_t;
 
-#define ARRAY_LEN(x)			(sizeof(x) / sizeof(*(x)))
-
 typedef struct {
 	vmCvar_t	*vmCvar;
 	char		*cvarName;
@@ -152,7 +150,7 @@ typedef enum
 	HL_GENERIC5,
 	HL_GENERIC6,
 	HL_MAX
-};
+} HL_t;
 
 //============================================================================
 
