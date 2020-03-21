@@ -440,6 +440,11 @@ void CreateNewWP_FromObject(wpobject_t *wp)
 		flagBlue = gWPArray[gWPNum];
 		oFlagBlue = flagBlue;
 	}
+	else if (gWPArray[gWPNum]->flags & WPFLAG_NEUTRAL_FLAG)
+	{
+		flagYellow = gWPArray[gWPNum];
+		oFlagYellow = flagYellow;
+	}
 
 	gWPNum++;
 }
@@ -798,12 +803,8 @@ int ConnectTrail(int startindex, int endindex)
 	vec3_t validspotpos;
 	trace_t tr;
 
-	mins[0] = -15;
-	mins[1] = -15;
-	mins[2] = 0;
-	maxs[0] = 15;
-	maxs[1] = 15;
-	maxs[2] = 0;
+	VectorSet(mins, -15, -15, 0);
+	VectorSet(maxs, 15, 15, 0);
 
 	nodenum = 0;
 	foundit = 0;
@@ -1884,19 +1885,16 @@ void FlagObjects(void)
 {
 	int i = 0, bestindex = 0, found = 0;
 	float bestdist = 999999, tlen = 0;
-	gentity_t *flag_red, *flag_blue, *ent;
+	gentity_t *flag_red, *flag_blue, *flag_yellow, *ent;
 	vec3_t a, mins, maxs;
 	trace_t tr;
 
 	flag_red = NULL;
 	flag_blue = NULL;
+	flag_yellow = NULL;
 
-	mins[0] = -15;
-	mins[1] = -15;
-	mins[2] = -5;
-	maxs[0] = 15;
-	maxs[1] = 15;
-	maxs[2] = 5;
+	VectorSet(mins, -15, -15, -5);
+	VectorSet(maxs, 15, 15, 5);
 
 	while (i < MAX_GENTITIES)
 	{
@@ -1905,16 +1903,17 @@ void FlagObjects(void)
 		if (ent && ent->inuse && ent->classname)
 		{
 			if (!flag_red && strcmp(ent->classname, "team_CTF_redflag") == 0)
-			{
 				flag_red = ent;
-			}
 			else if (!flag_blue && strcmp(ent->classname, "team_CTF_blueflag") == 0)
-			{
 				flag_blue = ent;
-			}
+			else if (level.CTF3ModeActive && !flag_yellow && strcmp(ent->classname, "team_CTF_neutralflag") == 0)
+				flag_yellow = ent;
 
-			if (flag_red && flag_blue)
-			{
+			if (level.CTF3ModeActive) {
+				if (flag_red && flag_blue && flag_yellow)
+					break;
+			}
+			else if (flag_red && flag_blue) {
 				break;
 			}
 		}
@@ -1922,13 +1921,14 @@ void FlagObjects(void)
 		i++;
 	}
 
-	i = 0;
-
-	if (!flag_red || !flag_blue)
+	if (!flag_red || !flag_blue || (level.CTF3ModeActive && !flag_yellow))
 	{
 		return;
 	}
 
+	//should just add some more variables and merge all of these searches into 1 loop
+	//find redflag...
+	i = 0;
 	while (i < gWPNum)
 	{
 		if (gWPArray[i] && gWPArray[i]->inuse)
@@ -1961,6 +1961,7 @@ void FlagObjects(void)
 		eFlagRed = flag_red;
 	}
 
+	//find blue flag....
 	bestdist = 999999;
 	bestindex = 0;
 	found = 0;
@@ -1996,6 +1997,46 @@ void FlagObjects(void)
 		flagBlue = gWPArray[bestindex];
 		oFlagBlue = flagBlue;
 		eFlagBlue = flag_blue;
+	}
+
+	if (!level.CTF3ModeActive)
+		return;
+	
+	//find yellow flag
+	bestdist = 999999;
+	bestindex = 0;
+	found = 0;
+	i = 0;
+	while (i < gWPNum)
+	{
+		if (gWPArray[i] && gWPArray[i]->inuse)
+		{
+			VectorSubtract(flag_yellow->s.pos.trBase, gWPArray[i]->origin, a);
+			tlen = VectorLength(a);
+
+			if (tlen < bestdist)
+			{
+				trap_Trace(&tr, flag_yellow->s.pos.trBase, mins, maxs, gWPArray[i]->origin, flag_yellow->s.number, MASK_SOLID);
+
+				if (tr.fraction == 1 || tr.entityNum == flag_yellow->s.number)
+				{
+					bestdist = tlen;
+					bestindex = i;
+					found = 1;
+				}
+			}
+
+		}
+
+		i++;
+	}
+
+	if (found)
+	{
+		gWPArray[bestindex]->flags |= WPFLAG_NEUTRAL_FLAG;
+		flagYellow = gWPArray[bestindex];
+		oFlagYellow = flagYellow;
+		eFlagYellow = flag_yellow;
 	}
 }
 
@@ -2161,16 +2202,17 @@ void LoadPath_ThisLevel(void)
 		if (ent && ent->inuse && ent->classname)
 		{
 			if (!eFlagRed && strcmp(ent->classname, "team_CTF_redflag") == 0)
-			{
 				eFlagRed = ent;
-			}
 			else if (!eFlagBlue && strcmp(ent->classname, "team_CTF_blueflag") == 0)
-			{
 				eFlagBlue = ent;
-			}
+			else if (level.CTF3ModeActive && !eFlagYellow && strcmp(ent->classname, "team_CTF_neutralflag") == 0)
+				eFlagYellow = ent;
 
-			if (eFlagRed && eFlagBlue)
-			{
+			if (!level.CTF3ModeActive) {
+				if (eFlagRed && eFlagBlue)
+					break;
+			}
+			else if (eFlagRed && eFlagBlue && eFlagYellow) {
 				break;
 			}
 		}

@@ -1133,8 +1133,6 @@ void ClientThink_real( gentity_t *ent ) {
 		ucmd->serverTime = level.time - 1000;
 	}
 
-
-
 	msec = ucmd->serverTime - client->ps.commandTime;
 
 	// following others may result in bad times, but we still want

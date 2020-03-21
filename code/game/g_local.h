@@ -374,8 +374,7 @@ typedef struct {
 #define AMFLAG_LOCKEDNAME		4
 #define AMFLAG_LOCKEDTEAM		8
 #define AMFLAG_ALTFOLLOW		16  //client can use alt-attack to follow prev client in spec
-
-
+#define AMFLAG_PLUGINDETECTED	32
 
 // client data that stays across multiple levels or tournament restarts
 // this is achieved by writing all the data to cvar strings at game shutdown
@@ -623,7 +622,12 @@ typedef struct {
 
 	#define G_BLUETEAM		0
 	#define G_REDTEAM		1
+#if 1//TESTING
+	#define G_YELLOWTEAM	2;
+	teamStats_t	teamstats[3];
+#else
 	teamStats_t	teamstats[2];
+#endif
 
 	int			numConnectedClients;
 	int			numNonSpectatorClients;	// includes connecting clients
@@ -689,6 +693,8 @@ typedef struct {
 	int			bodyQueIndex;			// dead bodies
 	gentity_t	*bodyQue[BODY_QUEUE_SIZE];
 	int			portalSequence;
+
+	qboolean	CTF3ModeActive; //Set to true when a map that supports 3 teams has been loaded, uses TEAM_FREE for 3rd team.
 } level_locals_t;
 
 
@@ -1165,13 +1171,13 @@ extern	vmCvar_t	g_fairflag;
 extern	vmCvar_t	g_allowChatPause;
 extern	vmCvar_t	g_logbs;
 
+extern	vmCvar_t	g_developer;
 extern	vmCvar_t	g_maxTeamSize;
-extern	vmCvar_t	g_fixSuicideScores;
+extern	vmCvar_t	g_suicideScorePenalty;
 extern	vmCvar_t	g_forceUniqueNames;
+extern	vmCvar_t	g_allowFreeTeam;
 
 // extern	vmCvar_t	g_scorePlums;
-
-
 
 extern	vmCvar_t	g_motd;
 extern	vmCvar_t	g_warmup;

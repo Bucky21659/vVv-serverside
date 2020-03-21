@@ -105,9 +105,12 @@ vmCvar_t	g_logKills;
 vmCvar_t	g_logItems;
 vmCvar_t	g_logbs;
 
+vmCvar_t	g_developer;
+vmCvar_t	g_allowFreeTeam;
 vmCvar_t	g_maxTeamSize;
-vmCvar_t	g_fixSuicideScores;
+vmCvar_t	g_suicideScorePenalty;
 vmCvar_t	g_forceUniqueNames;
+vmCvar_t	g_enableChatBubble;
 
 int gDuelist1 = -1;
 int gDuelist2 = -1;
@@ -116,7 +119,7 @@ int gDuelist2 = -1;
 /* static */ cvarTable_t		gameCvarTable[] = {
 	// don't override the cheat state set by the system
 	{ &g_cheats, "sv_cheats", "", 0, 0, qfalse },
-	{ &g_fps, "sv_fps", "", 0, 0, qtrue },
+	{ &g_fps, "sv_fps", "", CVAR_SERVERINFO, 0, qtrue },
 	{ &g_timescale, "timescale", "", 0, 0, qtrue },
 
 	// noset vars
@@ -177,13 +180,15 @@ int gDuelist2 = -1;
 	{ &g_logbs, "g_logbs", "0", CVAR_ARCHIVE|CVAR_VVV, 0, qfalse, qfalse, "Log all d/bs events to disk"  },
 	#endif
 
-
 	{ &g_fairflag, "g_fairflag", "1", CVAR_VVV|CVAR_ARCHIVE, 0, qfalse, qfalse, "If the setting is enabled: in situations where more than one player is standing/touching a ctf flag, checks will be made to ensure that the guy standing closest to it will get/cap it, as an alternative to randomness deciding who should get it."  },
 	{ &g_allowChatPause, "g_allowChatPause", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qfalse, qfalse, "Players not on spectator team can pause/unpause the game by using !pause and !unpause in chat."  },
 
+	{ &g_developer, "developer", "0", CVAR_TEMP, 0, qfalse, qfalse, "" },
+	{ &g_allowFreeTeam, "g_allowFreeTeam", "0", CVAR_VVV|CVAR_TEMP|CVAR_SERVERINFO, 0, qfalse, qfalse, "Configstring indicating that server is running 3 team CTF mode" },
 	{ &g_maxTeamSize, "g_maxTeamSize", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "If set, specifies a maximum players allowed on each team." },
-	{ &g_fixSuicideScores, "g_fixSuicideScores", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Does not subtract score from player when they suicide with /kill." },
+	{ &g_suicideScorePenalty, "g_suicideScorePenalty", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Enables/disables score penanlty given to players after they suicide using /kill. 0: No penalty - 1: baseJK2 behavior" },
 	{ &g_forceUniqueNames, "g_forceUniqueNames", "1", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Disallows more than one player to have the same name, additionally appends client number to \"Padawan\" names." },
+	{ &g_enableChatBubble, "g_enableChatBubble", "1", CVAR_VVV, 0, qtrue, qfalse, "" },
 
 	{ &g_saberInterpolate, "g_saberInterpolate", "1", CVAR_ARCHIVE, 0, qtrue },
 
@@ -333,11 +338,15 @@ int vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int a
 					Team_ReturnFlag( TEAM_BLUE );
 					naughty = qtrue;
 				}
+				if (ent->client->ps.powerups[PW_NEUTRALFLAG]) {
+					Team_ReturnFlag( TEAM_FREE );
+					naughty = qtrue;
+				}
 			}
 
 			if (naughty) {
 				//we just returned flag instantly in above code, so make sure the flag doesnt drop to the ground in ClientDisconnect when hes kicked.
-				ent->client->ps.powerups[PW_BLUEFLAG] = ent->client->ps.powerups[PW_REDFLAG] = 0;
+				ent->client->ps.powerups[PW_BLUEFLAG] = ent->client->ps.powerups[PW_REDFLAG] = ent->client->ps.powerups[PW_NEUTRALFLAG] = 0;
 
 				G_SecurityLogPrint( "Flag eating attempt", ent );
 				trap_DropClient(arg0, "was kicked for trying to do very bad thing!");
@@ -1342,6 +1351,9 @@ void CalculateRanks( void ) {
 	if ( g_gametype.integer >= GT_TEAM ) {
 		trap_SetConfigstring( CS_SCORES1, va("%i", level.teamScores[TEAM_RED] ) );
 		trap_SetConfigstring( CS_SCORES2, va("%i", level.teamScores[TEAM_BLUE] ) );
+		if (level.CTF3ModeActive) { //hijacking jedimaster for now
+			trap_SetConfigstring(CS_CLIENT_JEDIMASTER, va("%i", level.teamScores[TEAM_FREE]));
+		}
 	} else {
 		if ( level.numConnectedClients == 0 ) {
 			trap_SetConfigstring( CS_SCORES1, va("%i", SCORE_NOT_PRESENT) );
@@ -1974,7 +1986,13 @@ qboolean ScoreIsTied( void ) {
 	}
 
 	if ( g_gametype.integer >= GT_TEAM ) {
-		return level.teamScores[TEAM_RED] == level.teamScores[TEAM_BLUE];
+		if (level.CTF3ModeActive) {
+			if (level.teamScores[TEAM_RED] == level.teamScores[TEAM_BLUE] && level.teamScores[TEAM_RED] == level.teamScores[TEAM_FREE] && level.teamScores[TEAM_BLUE] == level.teamScores[TEAM_FREE])
+				return qtrue;
+		}
+		else {
+			return level.teamScores[TEAM_RED] == level.teamScores[TEAM_BLUE];
+		}
 	}
 
 	a = level.clients[level.sortedClients[0]].ps.persistant[PERS_SCORE];
@@ -2026,7 +2044,7 @@ void CheckExitRules( void ) {
 		}
 	}
 
-	if ( level.numPlayingClients < 2 ) {
+	if ( level.numPlayingClients < 2 && !g_developer.integer ) {
 		return;
 	}
 
@@ -2084,6 +2102,13 @@ void CheckExitRules( void ) {
 
 		if ( level.teamScores[TEAM_BLUE] >= g_capturelimit.integer ) {
 			trap_SendServerCommand( -1, "print \"Blue hit the capturelimit.\n\"" );
+			LogExit( "Capturelimit hit." );
+			return;
+		}
+
+		if (level.CTF3ModeActive && level.teamScores[TEAM_FREE] >= g_capturelimit.integer)
+		{
+			trap_SendServerCommand( -1, "print \"Yellow hit the capturelimit.\n\"" );
 			LogExit( "Capturelimit hit." );
 			return;
 		}
@@ -2327,15 +2352,30 @@ void CheckTeamVote( int team ) {
 CheckCvars
 ==================
 */
+static int lastPasswordMod = -1;
+static int lastFreeTeamMod = -1;
+static int lastDeveloperMod = -1;
 void CheckCvars( void ) {
-	static int lastMod = -1;
-
-	if ( g_password.modificationCount != lastMod ) {
-		lastMod = g_password.modificationCount;
+	if ( g_password.modificationCount != lastPasswordMod ) {
+		lastPasswordMod = g_password.modificationCount;
 		if ( *g_password.string && Q_stricmp( g_password.string, "none" ) ) {
 			trap_Cvar_Set( "g_needpass", "1" );
 		} else {
 			trap_Cvar_Set( "g_needpass", "0" );
+		}
+	}
+
+	if (g_developer.modificationCount != lastDeveloperMod) {
+		lastDeveloperMod = g_developer.modificationCount;
+		if (g_developer.integer && (qboolean)g_allowFreeTeam.integer != level.CTF3ModeActive) { //debug
+			level.CTF3ModeActive = (qboolean)g_allowFreeTeam.integer;
+		}
+	}
+
+	if (g_allowFreeTeam.modificationCount != lastFreeTeamMod) {
+		lastFreeTeamMod = g_allowFreeTeam.modificationCount;
+		if (g_developer.integer) { //debug
+			level.CTF3ModeActive = (qboolean)g_allowFreeTeam.integer;
 		}
 	}
 }
@@ -2624,4 +2664,3 @@ const char *G_GetStripEdString(char *refSection, char *refName)
 	Com_sprintf(text, sizeof(text), "@@@%s", refName);
 	return text;
 }
-

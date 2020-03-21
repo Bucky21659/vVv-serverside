@@ -1630,7 +1630,7 @@ typedef struct playerState_s {
 // so they aren't game/cgame only definitions
 //
 #define	BUTTON_ATTACK			1
-//#define	BUTTON_TALK			2			// displays talk balloon and disables actions
+#define	BUTTON_TALK				2			// displays talk balloon and disables actions
 //#define BUTTON_FORCEJUMP		2			//rww - might be better to just reassign this from button1 on the client..
 #define	BUTTON_USE_HOLDABLE		4
 #define	BUTTON_GESTURE			8

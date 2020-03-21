@@ -1186,7 +1186,7 @@ Only in One Flag CTF games
 		NULL,
         { "models/flags/n_flag.md3",
 		0, 0, 0 },
-/* view */		NULL,			
+/* view */		NULL,
 /* icon */		"icons/iconf_neutral1",
 /* pickup *///	"Neutral Flag",
 		0,
@@ -1651,6 +1651,28 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 			// ent->modelindex2 is non-zero on items if they are dropped
 			// we need to know this because we can pick up our dropped flag (and return it)
 			// but we can't pick up our flag at base
+#if 1//TESTING
+			if (ps->persistant[PERS_TEAM] == TEAM_RED) {
+				//if (item->giTag == PW_BLUEFLAG || item->giTag == PW_NEUTRALFLAG ||
+				if ((item->giTag == PW_BLUEFLAG && !ps->powerups[PW_NEUTRALFLAG]) || (item->giTag == PW_NEUTRALFLAG && !ps->powerups[PW_BLUEFLAG]) ||
+					(item->giTag == PW_REDFLAG && ent->modelindex2) ||
+					(item->giTag == PW_REDFLAG && (ps->powerups[PW_BLUEFLAG] || ps->powerups[PW_NEUTRALFLAG])) )
+					return qtrue;
+			} else if (ps->persistant[PERS_TEAM] == TEAM_BLUE) {
+				//if (item->giTag == PW_REDFLAG || item->giTag == PW_NEUTRALFLAG ||
+				if ((item->giTag == PW_REDFLAG && !ps->powerups[PW_NEUTRALFLAG]) || (item->giTag == PW_NEUTRALFLAG && !ps->powerups[PW_REDFLAG]) ||
+					(item->giTag == PW_BLUEFLAG && ent->modelindex2) ||
+					(item->giTag == PW_BLUEFLAG && (ps->powerups[PW_REDFLAG] || ps->powerups[PW_NEUTRALFLAG])) )
+					return qtrue;
+			}
+			else if (ps->persistant[PERS_TEAM] == TEAM_FREE /*&& level.CTF3ModeActive*/) {
+				//if (item->giTag == PW_REDFLAG || item->giTag == PW_BLUEFLAG ||
+				if ((item->giTag == PW_REDFLAG && !ps->powerups[PW_BLUEFLAG]) || (item->giTag == PW_BLUEFLAG && !ps->powerups[PW_REDFLAG]) ||
+					(item->giTag == PW_NEUTRALFLAG && ent->modelindex2) ||
+					(item->giTag == PW_NEUTRALFLAG && (ps->powerups[PW_REDFLAG] || ps->powerups[PW_BLUEFLAG])) )
+					return qtrue;
+			}
+#else
 			if (ps->persistant[PERS_TEAM] == TEAM_RED) {
 				if (item->giTag == PW_BLUEFLAG ||
 					(item->giTag == PW_REDFLAG && ent->modelindex2) ||
@@ -1662,6 +1684,7 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 					(item->giTag == PW_BLUEFLAG && ps->powerups[PW_REDFLAG]) )
 					return qtrue;
 			}
+#endif
 		}
 
 		return qfalse;

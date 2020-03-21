@@ -36,6 +36,8 @@
 #define WPFLAG_SAGA_IMPERIALOBJ	0x00100000 //imperial saga objective
 #define WPFLAG_NOMOVEFUNC		0x00200000 //don't move over if a func is under
 
+#define WPFLAG_NEUTRAL_FLAG		0x00400000 //yellow flag...
+
 #define LEVELFLAG_NOPOINTPREDICTION			1 //don't take waypoint beyond current into account when adjusting path view angles
 #define LEVELFLAG_IGNOREINFALLBACK			2 //ignore enemies when in a fallback navigation routine
 #define LEVELFLAG_IMUSTNTRUNAWAY			4 //don't be scared
@@ -393,8 +395,12 @@ extern wpobject_t *oFlagRed;
 extern wpobject_t *flagBlue;
 extern wpobject_t *oFlagBlue;
 
+extern wpobject_t *flagYellow;
+extern wpobject_t *oFlagYellow;
+
 extern gentity_t *eFlagRed;
 extern gentity_t *eFlagBlue;
+extern gentity_t *eFlagYellow;
 
 extern char gBotChatBuffer[MAX_CLIENTS][MAX_CHAT_BUFFER_SIZE];
 extern float gWPRenderTime;

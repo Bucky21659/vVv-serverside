@@ -26,6 +26,7 @@
 
 extern gentity_t *droppedRedFlag;
 extern gentity_t *droppedBlueFlag;
+extern gentity_t *droppedYellowFlag;
 
 //======================================================================
 #define MAX_MEDPACK_HEAL_AMOUNT		100
@@ -556,7 +557,7 @@ static qboolean pas_find_enemies( gentity_t *self )
 		{
 			continue;
 		}
-		if ( self->noDamageTeam && target->client->sess.sessionTeam == self->noDamageTeam )
+		if ( g_gametype.integer >= GT_TEAM && target->client->sess.sessionTeam == self->noDamageTeam )
 		{
 			continue;
 		}
@@ -1649,7 +1650,12 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity, int ammoCo
 		{
 			droppedBlueFlag = dropped;
 		}
-	} else { // auto-remove after 30 seconds
+		else if (strcmp(dropped->classname, "team_CTF_neutralflag") == 0)
+		{
+			droppedYellowFlag = dropped;
+		}
+	}
+	else { // auto-remove after 30 seconds
 		dropped->think = G_FreeEntity;
 		dropped->nextthink = level.time + 30000;
 	}
@@ -1670,9 +1676,10 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity, int ammoCo
 		dropped->s.angles[PITCH] = -90;
 	}
 
-	if (item->giTag != WP_BOWCASTER &&
+	if ((item->giType == IT_TEAM && item->giTag == PW_NEUTRALFLAG) || //LOL...
+		(item->giTag != WP_BOWCASTER &&
 		item->giTag != WP_DET_PACK &&
-		item->giTag != WP_THERMAL)
+		item->giTag != WP_THERMAL))
 	{
 		dropped->s.angles[ROLL] = -90;
 	}
@@ -1706,7 +1713,6 @@ gentity_t *Drop_Item( gentity_t *ent, gitem_t *item, float angle, int ammoCount 
 	AngleVectors( angles, velocity, NULL, NULL );
 	VectorScale( velocity, 150, velocity );
 	velocity[2] += 200 + crandom() * 50;
-
 
 	return LaunchItem( item, ent->s.pos.trBase, velocity, ammoCount );
 }
@@ -1934,6 +1940,14 @@ void G_CheckTeamItems( void ) {
 		item = BG_FindItem( "team_CTF_blueflag" );
 		if ( !item || !itemRegistered[ item - bg_itemlist ] ) {
 			G_Printf( S_COLOR_YELLOW "WARNING: No team_CTF_blueflag in map\n" );
+		}
+
+		if (level.CTF3ModeActive) {
+			//Com_Printf(S_COLOR_MAGENTA "TeamCTF3Mode mode active!\n");
+			item = BG_FindItem("team_CTF_neutralflag");
+			if (!item || !itemRegistered[item - bg_itemlist]) {
+				G_Printf( S_COLOR_YELLOW "WARNING: No team_CTF_neutralflag in map\n" );
+			}
 		}
 	}
 }

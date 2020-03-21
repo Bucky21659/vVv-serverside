@@ -80,11 +80,15 @@ wpobject_t *flagRed;
 wpobject_t *oFlagRed;
 wpobject_t *flagBlue;
 wpobject_t *oFlagBlue;
+wpobject_t *flagYellow;
+wpobject_t *oFlagYellow;
 
 gentity_t *eFlagRed;
 gentity_t *droppedRedFlag;
 gentity_t *eFlagBlue;
 gentity_t *droppedBlueFlag;
+gentity_t *eFlagYellow;
+gentity_t *droppedYellowFlag;
 
 char *ctfStateNames[] = {
 	"CTFSTATE_NONE",
@@ -2403,18 +2407,58 @@ int BotGetEnemyFlag(bot_state_t *bs)
 {
 	wpobject_t *flagPoint;
 	vec3_t a;
+	float dist1 = 0.0f, dist2 = 0.0f, closest = 0.0f;
 
-	if (level.clients[bs->client].sess.sessionTeam == TEAM_RED)
+	if (!level.CTF3ModeActive)
 	{
-		flagPoint = flagBlue;
+		switch (level.clients[bs->client].sess.sessionTeam) {
+			case TEAM_RED:
+				flagPoint = flagBlue;
+				break;
+			case TEAM_BLUE:
+				flagPoint = flagRed;
+				break;
+			default:
+				return 0;
+		}
 	}
-	else if (level.clients[bs->client].sess.sessionTeam == TEAM_BLUE)
-	{
-		flagPoint = flagRed;
-	}
-	else
-	{
-		return 0;
+	else { //figure out which flag is closest
+		switch (level.clients[bs->client].sess.sessionTeam)
+		{
+			case TEAM_RED:
+				if (flagBlue && flagYellow) {
+					dist1 = Distance(bs->origin, flagBlue->origin);
+					dist2 = Distance(bs->origin, flagYellow->origin);
+					closest = min(dist1, dist2);
+					flagPoint = (closest == dist1 ? flagBlue : flagYellow);
+					break;
+				}
+				flagPoint = (flagBlue ? flagBlue : flagYellow);
+				break;
+			case TEAM_BLUE:
+				if (flagRed && flagYellow) {
+					dist1 = Distance(bs->origin, flagRed->origin);
+					dist2 = Distance(bs->origin, flagYellow->origin);
+					closest = min(dist1, dist2);
+					flagPoint = (closest == dist1 ? flagRed : flagYellow);
+					break;
+				}
+				flagPoint = (flagRed ? flagRed : flagYellow);
+				break;
+			case TEAM_FREE:
+				if (flagRed && flagBlue) {
+					dist1 = Distance(bs->origin, flagRed->origin);
+					dist2 = Distance(bs->origin, flagBlue->origin);
+					closest = min(dist1, dist2);
+					flagPoint = (closest == dist1 ? flagRed : flagBlue);
+					break;
+				}
+				flagPoint = (flagRed ? flagRed : flagBlue);
+				break;
+			default:
+				return 0;
+				break;
+		}
 	}
 
 	if (!flagPoint)
@@ -2565,17 +2609,22 @@ int BotGetFlagHome(bot_state_t *bs)
 	wpobject_t *flagPoint;
 	vec3_t a;
 
-	if (level.clients[bs->client].sess.sessionTeam == TEAM_RED)
+	switch (level.clients[bs->client].sess.sessionTeam)
 	{
-		flagPoint = flagRed;
-	}
-	else if (level.clients[bs->client].sess.sessionTeam == TEAM_BLUE)
-	{
-		flagPoint = flagBlue;
-	}
-	else
-	{
-		return 0;
+		case TEAM_RED:
+			flagPoint = flagRed;
+			break;
+		case TEAM_BLUE:
+			flagPoint = flagBlue;
+			break;
+		case TEAM_FREE:
+			if (level.CTF3ModeActive) {
+				flagPoint = flagYellow;
+				break;
+			}
+		default:
+			return 0;
+			break;
 	}
 
 	if (!flagPoint)
@@ -2646,13 +2695,19 @@ void GetNewFlagPoint(wpobject_t *wp, gentity_t *flagEnt, int team)
 
 	if (foundindex)
 	{
-		if (team == TEAM_RED)
-		{
-			flagRed = gWPArray[bestindex];
-		}
-		else
-		{
-			flagBlue = gWPArray[bestindex];
+		switch (team) {
+			case TEAM_RED:
+				flagRed = gWPArray[bestindex];
+				break;
+			case TEAM_FREE:
+				if (level.CTF3ModeActive) {
+					flagYellow = gWPArray[bestindex];
+					break;
+				}
+			default:
+			case TEAM_BLUE:
+				flagBlue = gWPArray[bestindex];
+				break;
 		}
 	}
 }
@@ -2660,8 +2715,7 @@ void GetNewFlagPoint(wpobject_t *wp, gentity_t *flagEnt, int team)
 int CTFTakesPriority(bot_state_t *bs)
 {
 	gentity_t *ent = NULL;
-	int enemyFlag = 0;
-	int myFlag = 0;
+	int myFlag = 0, enemyFlag = 0, enemyFlag2 = 0;
 	int enemyHasOurFlag = 0;
 	int weHaveEnemyFlag = 0;
 	int numOnMyTeam = 0;
@@ -2705,27 +2759,38 @@ int CTFTakesPriority(bot_state_t *bs)
 		dosw = 1;
 	}
 
-	if (level.clients[bs->client].sess.sessionTeam == TEAM_RED)
+	switch (level.clients[bs->client].sess.sessionTeam)
 	{
-		myFlag = PW_REDFLAG;
-	}
-	else
-	{
-		myFlag = PW_BLUEFLAG;
+		case TEAM_RED:
+			myFlag = PW_REDFLAG;
+			enemyFlag = PW_BLUEFLAG;
+			enemyFlag2 = PW_NEUTRALFLAG;
+			break;
+		case TEAM_FREE:
+			if (level.CTF3ModeActive)
+			{
+				myFlag = PW_NEUTRALFLAG;
+				enemyFlag = PW_REDFLAG;
+				enemyFlag2 = PW_NEUTRALFLAG;
+				break;
+			}
+		default:
+		case TEAM_BLUE:
+			myFlag = PW_BLUEFLAG;
+			enemyFlag = PW_REDFLAG;
+			enemyFlag2 = PW_NEUTRALFLAG;
+			break;
 	}
 
-	if (level.clients[bs->client].sess.sessionTeam == TEAM_RED)
-	{
-		enemyFlag = PW_BLUEFLAG;
-	}
-	else
-	{
-		enemyFlag = PW_REDFLAG;
-	}
+	if (!level.CTF3ModeActive)
+		enemyFlag2 = enemyFlag;
 
 	if (!flagRed || !flagBlue ||
 		!flagRed->inuse || !flagBlue->inuse ||
-		!eFlagRed || !eFlagBlue)
+		!eFlagRed || !eFlagBlue ||
+		(level.CTF3ModeActive &&
+		(!flagYellow || !flagYellow->inuse ||
+		!eFlagYellow || !eFlagYellow->inuse)))
 	{
 		return 0;
 	}
@@ -2738,6 +2803,12 @@ int CTFTakesPriority(bot_state_t *bs)
 	VectorCopy(flagBlue->origin, t);
 	t[2] += 128;
 	G_TestLine(flagBlue->origin, t, 0x0000ff, 500);
+
+	if (level.CTF3ModeActive) {
+		VectorCopy(flagYellow->origin, t);
+		t[2] += 128;
+		G_TestLine(flagYellow->origin, t, 0x0000ff, 500);
+	}
 #endif
 
 	if (droppedRedFlag && (droppedRedFlag->flags & FL_DROPPED_ITEM))
@@ -2758,6 +2829,13 @@ int CTFTakesPriority(bot_state_t *bs)
 		flagBlue = oFlagBlue;
 	}
 
+	if (level.CTF3ModeActive) {
+		if (droppedYellowFlag && (droppedYellowFlag->flags & FL_DROPPED_ITEM))
+			GetNewFlagPoint(flagYellow, droppedYellowFlag, TEAM_FREE);
+		else
+			flagYellow = oFlagYellow;
+	}
+
 	if (!bs->ctfState)
 	{
 		return 0;
@@ -2772,6 +2850,10 @@ int CTFTakesPriority(bot_state_t *bs)
 		if (ent && ent->client)
 		{
 			if (ent->client->ps.powerups[enemyFlag] && OnSameTeam(&g_entities[bs->client], ent))
+			{
+				weHaveEnemyFlag = 1;
+			}
+			else if (level.CTF3ModeActive && ent->client->ps.powerups[enemyFlag2] && OnSameTeam(&g_entities[bs->client], ent))
 			{
 				weHaveEnemyFlag = 1;
 			}
@@ -2809,7 +2891,7 @@ int CTFTakesPriority(bot_state_t *bs)
 		i++;
 	}
 
-	if (bs->cur_ps.powerups[enemyFlag])
+	if (bs->cur_ps.powerups[enemyFlag] || bs->cur_ps.powerups[enemyFlag2])
 	{
 		if ((numOnMyTeam < 2 || !numAttackers) && enemyHasOurFlag)
 		{
@@ -5464,10 +5546,11 @@ void CTFFlagMovement(bot_state_t *bs)
 		bs->wantFlag = NULL;
 	}
 
-	if (flagRed && flagBlue)
+	if (flagRed && flagBlue && !(level.CTF3ModeActive && !flagYellow))
 	{
 		if (bs->wpDestination == flagRed ||
-			bs->wpDestination == flagBlue)
+			bs->wpDestination == flagBlue ||
+			(level.CTF3ModeActive && bs->wpDestination == flagYellow))
 		{
 			if (bs->wpDestination == flagRed && droppedRedFlag && (droppedRedFlag->flags & FL_DROPPED_ITEM) && droppedRedFlag->classname && strcmp(droppedRedFlag->classname, "freed") != 0)
 			{
@@ -5477,6 +5560,11 @@ void CTFFlagMovement(bot_state_t *bs)
 			if (bs->wpDestination == flagBlue && droppedBlueFlag && (droppedBlueFlag->flags & FL_DROPPED_ITEM) && droppedBlueFlag->classname && strcmp(droppedBlueFlag->classname, "freed") != 0)
 			{
 				desiredDrop = droppedBlueFlag;
+				diddrop = 1;
+			}
+			if (level.CTF3ModeActive && bs->wpDestination == flagYellow && droppedYellowFlag && (droppedYellowFlag->flags & FL_DROPPED_ITEM) && droppedYellowFlag->classname && strcmp(droppedYellowFlag->classname, "freed") != 0)
+			{
+				desiredDrop = droppedYellowFlag;
 				diddrop = 1;
 			}
 

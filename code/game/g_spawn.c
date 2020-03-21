@@ -792,6 +792,19 @@ void SP_worldspawn( void )
 	G_SpawnString( "enableBreath", "0", &text );
 	trap_Cvar_Set( "g_enableBreath", text );
 
+	//Check for 3 team CTF map.
+	G_SpawnString("3TeamCTFSupported", "0", &text);
+	level.CTF3ModeActive = qfalse;
+	if (trap_Cvar_VariableIntegerValue("g_gametype") >= GT_TEAM)
+		level.CTF3ModeActive = (qboolean)atoi(text);
+	if ((qboolean)trap_Cvar_VariableIntegerValue("g_allowFreeTeam") != level.CTF3ModeActive)
+	{ //update cvar and set level.newSession  as necessary 
+		level.newSession = qtrue; //puts all clients into spec
+		trap_Cvar_Set("g_allowFreeTeam", level.CTF3ModeActive ? "1" : "0");
+		trap_Cvar_Update(&g_allowFreeTeam);
+	}
+	trap_Cvar_Update(&g_allowFreeTeam);
+
 	g_entities[ENTITYNUM_WORLD].s.number = ENTITYNUM_WORLD;
 	g_entities[ENTITYNUM_WORLD].classname = "worldspawn";
 

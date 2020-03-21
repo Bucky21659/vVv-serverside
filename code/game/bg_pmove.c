@@ -17,6 +17,10 @@ qboolean gPMDoSlowFall = qfalse;
 extern	vmCvar_t	g_pauseGame;
 extern	vmCvar_t	g_block333, g_maxmsec;
 
+#if JK2_GAME
+extern	vmCvar_t	g_enableChatBubble;
+#endif
+
 #define BLOCK333_MS		4 //was 5  MINIMUM MSEC  - 250FPS physics are allowed as they are nearly identical to 125FPS
 //val of 4 = maximum fps allowed is 250
 // movement parameters
@@ -1420,7 +1424,7 @@ static void PM_FlyMove( void ) {
 	if ( !scale ) {
 		wishvel[0] = 0;
 		wishvel[1] = 0;
-		wishvel[2] = 0;
+		wishvel[2] = pm->ps->speed * (pm->cmd.upmove/127.0f); // MVSDK: 1.02 originally put this to 0, but let's use 1.03+ behaviour for this as well.
 	} else {
 		for (i=0 ; i<3 ; i++) {
 			wishvel[i] = scale * pml.forward[i]*pm->cmd.forwardmove + scale * pml.right[i]*pm->cmd.rightmove;
@@ -4271,6 +4275,14 @@ void PmoveSingle (pmove_t *pmove) {
 	if ( abs( pm->cmd.forwardmove ) > 64 || abs( pm->cmd.rightmove ) > 64 ) {
 		pm->cmd.buttons &= ~BUTTON_WALKING;
 	}
+
+#ifdef JK2_GAME // set the talk balloon flag
+	if ( g_enableChatBubble.integer && (pm->cmd.buttons & BUTTON_TALK) ) {
+		pm->ps->eFlags |= EF_TALK;
+	} else {
+		pm->ps->eFlags &= ~EF_TALK;
+	}
+#endif
 
 	// In certain situations, we may want to control which attack buttons are pressed and what kind of functionality
 	//	is attached to them
