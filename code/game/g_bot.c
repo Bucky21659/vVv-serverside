@@ -421,9 +421,24 @@ void G_AddRandomBot( int team ) {
 			num--;
 			if (num <= 0) {
 				skill = trap_Cvar_VariableValue( "g_spSkill" );
-				if (team == TEAM_RED) teamstr = "red";
-				else if (team == TEAM_BLUE) teamstr = "blue";
-				else teamstr = "";
+
+				switch (team) {
+					case TEAM_RED:
+						teamstr = "red";
+						break;
+					case TEAM_BLUE:
+						teamstr = "blue";
+						break;
+					case TEAM_FREE:
+						if (level.CTF3ModeActive && g_gametype.integer >= GT_TEAM) {
+							teamstr = "yellow";
+							break;
+						}
+					default:
+						teamstr = "";
+						break;
+				}
+
 				strncpy(netname, value, sizeof(netname)-1);
 				netname[sizeof(netname)-1] = '\0';
 				Q_CleanStr(netname);
@@ -722,6 +737,7 @@ G_AddBot
 //	char			*headmodel;
 	char			userinfo[MAX_INFO_STRING];
 	int				preTeam = 0;
+	int				newTeam = 0;
 
 	// get the botinfo from bots.txt
 	botinfo = G_GetBotInfoByName( name );
@@ -809,11 +825,22 @@ G_AddBot
 	// initialize the bot settings
 	if( !team || !*team ) {
 		if( g_gametype.integer >= GT_TEAM ) {
-			if( PickTeam(clientNum) == TEAM_RED) {
-				team = "red";
-			}
-			else {
+			newTeam = PickTeam(clientNum);
+			switch (newTeam)
+			{
+				case TEAM_FREE:
+				default:
+					if (level.CTF3ModeActive) {
+						team = "yellow";
+						break;
+					}
+				case TEAM_RED:
+					team = "red";
+					break;
+
+				case TEAM_BLUE:
 				team = "blue";
+				break;
 			}
 		}
 		else {
@@ -840,6 +867,9 @@ G_AddBot
 		else if (team && Q_stricmp(team, "blue") == 0)
 		{
 			bot->client->sess.sessionTeam = TEAM_BLUE;
+		}
+		else if (team && level.CTF3ModeActive && Q_stricmp(team, "yellow")) {
+			bot->client->sess.sessionTeam = TEAM_FREE;
 		}
 		else
 		{
@@ -927,6 +957,30 @@ void Svcmd_AddBot_f( void ) {
 
 	// team
 	trap_Argv( 3, team, sizeof( team ) );
+	if (!team[0] || team[0] == '\0') {
+		if (g_gametype.integer < GT_TEAM) {
+			Q_strncpyz(team, "free", sizeof(team));
+		}
+		else {
+			switch (PickTeam(-1))
+			{
+				case TEAM_RED:
+					Q_strncpyz(team, "red", sizeof(team));
+					break;
+				case TEAM_BLUE:
+					Q_strncpyz(team, "blue", sizeof(team));
+					break;
+				case TEAM_FREE:
+					if (level.CTF3ModeActive) {
+						Q_strncpyz(team, "yellow", sizeof(team));
+						break;
+					}
+				default:
+					Com_Printf("random bot team assignment failed?\n");
+					break;
+			}
+		}
+	}
 
 	// delay
 	trap_Argv( 4, string, sizeof( string ) );

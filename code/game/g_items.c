@@ -26,6 +26,7 @@
 
 extern gentity_t *droppedRedFlag;
 extern gentity_t *droppedBlueFlag;
+extern gentity_t *droppedYellowFlag;
 
 //======================================================================
 #define MAX_MEDPACK_HEAL_AMOUNT		100
@@ -1649,7 +1650,12 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity, int ammoCo
 		{
 			droppedBlueFlag = dropped;
 		}
-	} else { // auto-remove after 30 seconds
+		else if (strcmp(dropped->classname, "team_CTF_neutralflag") == 0)
+		{
+			droppedYellowFlag = dropped;
+		}
+	}
+	else { // auto-remove after 30 seconds
 		dropped->think = G_FreeEntity;
 		dropped->nextthink = level.time + 30000;
 	}
