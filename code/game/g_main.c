@@ -111,6 +111,7 @@ vmCvar_t	g_maxTeamSize;
 vmCvar_t	g_suicideScorePenalty;
 vmCvar_t	g_forceUniqueNames;
 vmCvar_t	g_enableChatBubble;
+vmCvar_t	g_fixSaberSwitch;
 
 int gDuelist1 = -1;
 int gDuelist2 = -1;
@@ -189,6 +190,7 @@ int gDuelist2 = -1;
 	{ &g_suicideScorePenalty, "g_suicideScorePenalty", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Enables/disables score penanlty given to players after they suicide using /kill. 0: No penalty - 1: baseJK2 behavior" },
 	{ &g_forceUniqueNames, "g_forceUniqueNames", "1", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Disallows more than one player to have the same name, additionally appends client number to \"Padawan\" names." },
 	{ &g_enableChatBubble, "g_enableChatBubble", "1", CVAR_VVV, 0, qtrue, qfalse, "" },
+	{ &g_fixSaberSwitch, "g_fixSaberSwitch", "0", CVAR_VVV, 0, qfalse, qfalse, "Prevents instant saber attacks when a player switching away from another weapon while holding attack" },
 
 	{ &g_saberInterpolate, "g_saberInterpolate", "1", CVAR_ARCHIVE, 0, qtrue },
 

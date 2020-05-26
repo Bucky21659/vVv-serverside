@@ -19,6 +19,7 @@ extern	vmCvar_t	g_block333, g_maxmsec;
 
 #if JK2_GAME
 extern	vmCvar_t	g_enableChatBubble;
+extern	vmCvar_t	g_fixSaberSwitch;
 #endif
 
 #define BLOCK333_MS		4 //was 5  MINIMUM MSEC  - 250FPS physics are allowed as they are nearly identical to 125FPS
@@ -2742,6 +2743,12 @@ void PM_FinishWeaponChange( void ) {
 	}
 	pm->ps->weapon = weapon;
 	pm->ps->weaponstate = WEAPON_RAISING;
+
+#ifdef JK2_GAME
+	if (g_fixSaberSwitch.integer && weapon == WP_SABER) {//fix saber switch glitch if we want
+		pm->ps->weaponTime += PM_AnimLength(0, (animNumber_t)BOTH_STAND1TO2); //1250;
+	}
+#endif
 
 	pm->ps->weaponTime += 250;
 }
