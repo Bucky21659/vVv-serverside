@@ -848,8 +848,8 @@ Cmd_Team_f
 */
 void Cmd_ForceChanged_f( gentity_t *ent )
 {
-	char fpChStr[1024];
-	const char *buf;
+	//char fpChStr[1024];
+	//const char *buf;
 
 	if (ent->client->sess.sessionTeam == TEAM_SPECTATOR)
 	{ //if it's a spec, just make the changes now
@@ -1040,8 +1040,6 @@ static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, cons
 #define EC		"\x19"
 
 static qboolean Com_CharIsOneOfCharset( const char c, const char *set ) {
-	int i;
-
 	while (*set) {
 		if (*(set++) == c)
 			return qtrue;
@@ -1112,8 +1110,6 @@ static const chatCommand_t chatCmds[] = {
 static const size_t numChatCommands = ARRAY_LEN( chatCmds );
 
 static void Cmd_PauseGame_C (gentity_t *ent, const char *args) {
-	int c;
-
 	if (args && args[0]) {
 		return;
 	}
@@ -1146,7 +1142,7 @@ static void Cmd_PauseGame_C (gentity_t *ent, const char *args) {
 }
 
 static void Cmd_UnpauseGame_C (gentity_t *ent, const char *args) {
-	int real;
+	//int real;
 
 	if (args && args[0]) {
 		return;
@@ -2033,7 +2029,6 @@ void G_SendClientCenterPrint (const int client, const char *fmt, ...) {
 }
 
 static void Cmd_IgnoreClear_f (gentity_t *ent) {
-	int i;
 	const int clNum = ent - g_entities;
 
 	if (!ent->client->sess.ignoredclients) {

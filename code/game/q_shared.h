@@ -565,8 +565,8 @@ void *Hunk_AllocDebug( int size, ha_pref preference, char *label, char *file, in
 void *Hunk_Alloc( int size, ha_pref preference );
 #endif
 
-void Com_Memset (void* dest, const int val, const size_t count);
-void Com_Memcpy (void* dest, const void* src, const size_t count);
+#define Com_Memset( x, y, z ) memset( x, y, z )
+#define Com_Memcpy( x, y, z ) memcpy( x, y, z )
 
 #define CIN_system	1
 #define CIN_loop	2

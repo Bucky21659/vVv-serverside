@@ -1217,7 +1217,6 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 	int			teamTask, teamLeader, team, health;
 	char		*s;
 	char		model[MAX_QPATH];
-	char		forcePowers[MAX_QPATH];
 	char		oldname[MAX_INFO_STRING];
 	gclient_t	*client;
 	char		c1[MAX_INFO_STRING];
@@ -1226,8 +1225,6 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 	char		blueTeam[MAX_INFO_STRING];
 	char		userinfo[MAX_INFO_STRING] = {0};
 	qboolean	changedName	= qfalse;
-	int x;
-
 
 	ent = g_entities + clientNum;
 	client = ent->client;

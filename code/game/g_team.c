@@ -365,11 +365,12 @@ int BinaryTeam( gentity_t *ent ) { //should probably be renamed now...
 			break;
 	}
 }
+
 void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker)
 {
 	int i;
 	gentity_t *ent;
-	int flag_pw, enemy_flag_pw;
+	int flag_pw;
 	int otherteam;
 	int tokens;
 	gentity_t *flag, *carrier = NULL;
@@ -472,7 +473,6 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 
 		level.teamstats[ BinaryTeam(attacker) ].defense++;
 
-
 		attacker->client->ps.persistant[PERS_DEFEND_COUNT]++;
 
 		team = attacker->client->sess.sessionTeam;
@@ -504,6 +504,7 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 	default:
 		return;
 	}
+
 	// find attacker's team's flag carrier
 	for (i = 0; i < g_maxclients.integer; i++) {
 		carrier = g_entities + i;
@@ -563,7 +564,6 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 
 			level.teamstats[ BinaryTeam(attacker) ].defense++;
 
-
 			attacker->client->ps.persistant[PERS_DEFEND_COUNT]++;
 			// add the sprite over the player's head
 			attacker->client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );
@@ -584,7 +584,7 @@ carrier defense.
 */
 void Team_CheckHurtCarrier(gentity_t *targ, gentity_t *attacker)
 {
-	int flag_pw;
+	int flag_pw = 0;
 
 	if (!targ->client || !attacker->client)
 		return;
@@ -613,7 +613,7 @@ void Team_CheckHurtCarrier(gentity_t *targ, gentity_t *attacker)
 	}
 
 	// flags
-	if (targ->client->ps.powerups[flag_pw] &&
+	if (flag_pw && targ->client->ps.powerups[flag_pw] &&
 		targ->client->sess.sessionTeam != attacker->client->sess.sessionTeam)
 		attacker->client->pers.teamState.lasthurtcarrier = level.time;
 
