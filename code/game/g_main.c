@@ -2346,6 +2346,25 @@ CheckTeamVote
 void CheckTeamVote( int team ) {
 }
 
+/*
+==================
+G_CheckUniquePlayerNames
+==================
+*/
+static void G_CheckUniquePlayerNames(void) {
+	int i;
+	gclient_t *cl;
+	for (i = 0, cl = level.clients; i < MAX_CLIENTS; i++, cl++) {
+		if (!cl || cl->pers.connected == CON_DISCONNECTED)
+			continue;
+
+		if (!g_entities[i].inuse || (g_entities[i].r.svFlags & SVF_BOT))
+			continue;
+
+		ClientUserinfoChanged(i, qfalse);
+	}
+}
+
 
 /*
 ==================
@@ -2355,6 +2374,7 @@ CheckCvars
 static int lastPasswordMod = -1;
 static int lastFreeTeamMod = -1;
 static int lastDeveloperMod = -1;
+static int lastForceUniqueNamesMod = 0; //set to 0 since I don't want to call the update function on init
 void CheckCvars( void ) {
 	if ( g_password.modificationCount != lastPasswordMod ) {
 		lastPasswordMod = g_password.modificationCount;
@@ -2377,6 +2397,11 @@ void CheckCvars( void ) {
 		if (g_developer.integer) { //debug
 			level.CTF3ModeActive = (qboolean)g_allowFreeTeam.integer;
 		}
+	}
+
+	if (g_forceUniqueNames.modificationCount != lastForceUniqueNamesMod) {
+		lastForceUniqueNamesMod = g_forceUniqueNames.modificationCount;
+		G_CheckUniquePlayerNames();
 	}
 }
 

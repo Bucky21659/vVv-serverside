@@ -652,6 +652,16 @@ int Q_isalpha( int c )
 	return ( 0 );
 }
 
+int Q_isanumber( int c )
+{
+	if( c == '\0' )
+		return qfalse;
+
+	if (c >= '0' && c <= '9')
+		return ( 1 );
+	return ( 0 );
+}
+
 char *Q_stristr(const char *str, const char *charset) {
 	int i;
 

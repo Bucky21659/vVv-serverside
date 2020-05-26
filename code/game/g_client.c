@@ -1272,22 +1272,49 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 
 	if (g_forceUniqueNames.integer)
 	{
-		gclient_t *cl;
 		int w;
+		gclient_t *cl;
+		char *s = client->pers.netname;
+		qboolean nameOk = qfalse;
+
+		while (*s != '\0') {
+			if (*s != ' ' && Q_isprint(*s) && (Q_isalpha(*s) || Q_isanumber(*s))) {
+				nameOk = qtrue;
+				break;
+			}
+			s++;
+		}
+
+		if (!nameOk) {
+			strcpy(client->pers.netname, "Padawan");
+			strcpy(client->pers.netnameClean, "Padawan");
+			nameOk = qtrue;
+		}
 
 		for (w = 0, cl = level.clients; w < MAX_CLIENTS; w++, cl++) {
 			if (!cl || cl->pers.connected == CON_DISCONNECTED || cl == client || !cl->pers.netnameClean[0] || cl->pers.netnameClean[0] == '\0')
 				continue;
 
-			if (!Q_stricmp(client->pers.netnameClean, cl->pers.netnameClean))
-			{
-				char newName[MAX_NETNAME] = { 0 };
-				Com_sprintf(newName, sizeof(newName), "Padawan %s(%s%i%s)", S_COLOR_WHITE, S_COLOR_CYAN, clientNum, S_COLOR_WHITE);
-				Q_strncpyz( client->pers.netname, newName, sizeof(client->pers.netname) );
-				Q_strncpyz( client->pers.netnameClean, client->pers.netname, sizeof(client->pers.netnameClean) );
-				Q_CleanStr( client->pers.netnameClean );
+			if (!Q_stricmp(client->pers.netnameClean, cl->pers.netnameClean)) {
+				nameOk = qfalse;
+				break;
 			}
 		}
+
+		if (!nameOk) {
+			Com_sprintf(client->pers.netname, sizeof(client->pers.netname),
+				"Padawan " S_COLOR_WHITE "(" S_COLOR_CYAN "%i" S_COLOR_WHITE ")", clientNum);
+		}
+
+		if (g_forceUniqueNames.integer >= 2 && strlen(client->sess.ip) > 0 && (!nameOk || !Q_stricmp(client->pers.netname, "Padawan"))) {
+			Q_strcat(client->pers.netname, sizeof(client->pers.netname), va(" (" S_COLOR_YELLOW "%s" S_COLOR_WHITE ")", client->sess.ip));
+		}
+
+		if (!nameOk) {
+			Q_strncpyz( client->pers.netnameClean, client->pers.netname, sizeof(client->pers.netnameClean) );
+			Q_CleanStr( client->pers.netnameClean );
+		}
+
 	}
 
 	//Update the correct name in the engine
