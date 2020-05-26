@@ -74,6 +74,11 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 	else
 		endTime = level.time;
 
+	//want to know the total # of clients
+	Com_sprintf(string, sizeof(string), "scores %i %i %i",
+		level.numConnectedClients, level.teamScores[TEAM_RED], level.teamScores[TEAM_BLUE]);
+	stringlength = strlen(string);
+
 	for (i=0 ; i < numSorted ; i++) {
 		int		ping;
 
@@ -112,12 +117,7 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		stringlength += j;
 	}
 
-	//still want to know the total # of clients
-	i = level.numConnectedClients;
-
-	trap_SendServerCommand( ent-g_entities, va("scores %i %i %i%s", i,
-		level.teamScores[TEAM_RED], level.teamScores[TEAM_BLUE],
-		string ) );
+	trap_SendServerCommand( ent-g_entities, string );
 
 	if (g_gametype.integer == GT_CTF && ent->client->pers.teamInfo == 2)
 		G_SendTeamStats( ent );
