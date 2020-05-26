@@ -10,6 +10,57 @@
 
 #include "../qcommon/disablewarnings.h"
 
+//================= COMPILER-SPECIFIC DEFINES ===========================
+
+#if defined __LCC__
+
+#define Q_INLINE
+#define QDECL
+#define LIBEXPORT
+#define Q_NORETURN
+#define Q_PTR_NORETURN
+#define q_unreachable()
+#define __attribute__(x)
+
+#elif defined _MSC_VER							// Microsoft Visual C++
+
+#define Q_INLINE __inline
+#define	QDECL	__cdecl
+#define LIBEXPORT __declspec(dllexport)
+#define Q_NORETURN __declspec(noreturn)
+#define Q_PTR_NORETURN // MSVC doesn't support noreturn function pointers
+#define q_unreachable() abort()
+#define __attribute__(x)
+
+#elif (defined __GNUC__ || defined __clang__)	// GCC & Clang
+
+#define Q_INLINE inline
+#define QDECL
+#define LIBEXPORT __attribute__((visibility("default")))
+#define Q_NORETURN __attribute__((noreturn))
+#define Q_PTR_NORETURN Q_NORETURN
+#define q_unreachable() __builtin_unreachable()
+
+#else											// Any ANSI C compiler
+
+#define Q_INLINE inline
+#define QDECL
+#define LIBEXPORT
+#define Q_NORETURN
+#define Q_PTR_NORETURN
+#define q_unreachable() abort()
+#define __attribute__(x)
+
+#endif
+
+#ifdef __cplusplus
+#define ID_INLINE Q_INLINE
+#else
+#define ID_INLINE static Q_INLINE
+#endif
+
+//=============================================================
+
 /**********************************************************************
   VM Considerations
 
@@ -68,10 +119,6 @@
 #define idppc	0
 #endif
 
-// for windows fastcall option
-
-#define	QDECL
-
 short   ShortSwap (short l);
 int		LongSwap (int l);
 float	FloatSwap (const float *f);
@@ -102,13 +149,11 @@ char *Q_stristr(const char *str, const char *charset);
 #endif
 #endif
 
-#define ID_INLINE __inline
-
-static ID_INLINE short BigShort( short l) { return ShortSwap(l); }
+ID_INLINE short BigShort( short l) { return ShortSwap(l); }
 #define LittleShort
-static ID_INLINE int BigLong(int l) { return LongSwap(l); }
+ID_INLINE int BigLong(int l) { return LongSwap(l); }
 #define LittleLong
-static ID_INLINE float BigFloat(const float *l) { FloatSwap(l); }
+ID_INLINE float BigFloat(const float *l) { FloatSwap(l); }
 #define LittleFloat
 
 #define	PATH_SEP '\\'
@@ -342,6 +387,9 @@ typedef enum {
 	EXEC_APPEND			// add to end of the command buffer (normal case)
 } cbufExec_t;
 
+#define VALIDSTRING( a )	( ( a != NULL ) && ( a[0] != '\0' ) )
+#define VALIDENT( e )		( ( e != NULL ) && ( (e)->inuse ) )
+#define ARRAY_LEN( x )		( sizeof( x ) / sizeof( *(x) ) )
 
 //
 // these aren't needed by any of the VMs.  put in another header?
@@ -425,7 +473,7 @@ typedef enum
 	FORCE_LEVEL_2,
 	FORCE_LEVEL_3,
 	NUM_FORCE_POWER_LEVELS
-};
+} forceLevels_t;
 
 #define ATST_HEADSIZE		90
 #define ATST_MINS0			-40
@@ -517,8 +565,8 @@ void *Hunk_AllocDebug( int size, ha_pref preference, char *label, char *file, in
 void *Hunk_Alloc( int size, ha_pref preference );
 #endif
 
-void Com_Memset (void* dest, const int val, const size_t count);
-void Com_Memcpy (void* dest, const void* src, const size_t count);
+#define Com_Memset( x, y, z ) memset( x, y, z )
+#define Com_Memcpy( x, y, z ) memcpy( x, y, z )
 
 #define CIN_system	1
 #define CIN_loop	2
@@ -781,7 +829,6 @@ typedef struct {
 	float	v[3];
 } vec3struct_t;
 #define VectorCopy(a,b)	*(vec3struct_t *)b=*(vec3struct_t *)a;
-#define ID_INLINE static
 #endif
 #endif
 
@@ -809,29 +856,29 @@ void ClearBounds( vec3_t mins, vec3_t maxs );
 void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs );
 
 #ifndef __LCC__
-static ID_INLINE int VectorCompare( const vec3_t v1, const vec3_t v2 ) {
+ID_INLINE int VectorCompare( const vec3_t v1, const vec3_t v2 ) {
 	if (v1[0] != v2[0] || v1[1] != v2[1] || v1[2] != v2[2]) {
 		return 0;
 	}
 	return 1;
 }
 
-static ID_INLINE vec_t VectorLength( const vec3_t v ) {
+ID_INLINE vec_t VectorLength( const vec3_t v ) {
 	return (vec_t)sqrt (v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 }
 
-static ID_INLINE vec_t VectorLengthSquared( const vec3_t v ) {
+ID_INLINE vec_t VectorLengthSquared( const vec3_t v ) {
 	return (v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 }
 
-static ID_INLINE vec_t Distance( const vec3_t p1, const vec3_t p2 ) {
+ID_INLINE vec_t Distance( const vec3_t p1, const vec3_t p2 ) {
 	vec3_t	v;
 
 	VectorSubtract (p2, p1, v);
 	return VectorLength( v );
 }
 
-static ID_INLINE vec_t DistanceSquared( const vec3_t p1, const vec3_t p2 ) {
+ID_INLINE vec_t DistanceSquared( const vec3_t p1, const vec3_t p2 ) {
 	vec3_t	v;
 
 	VectorSubtract (p2, p1, v);
@@ -840,7 +887,7 @@ static ID_INLINE vec_t DistanceSquared( const vec3_t p1, const vec3_t p2 ) {
 
 // fast vector normalize routine that does not check to make sure
 // that length != 0, nor does it return length, uses rsqrt approximation
-static ID_INLINE void VectorNormalizeFast( vec3_t v )
+ID_INLINE void VectorNormalizeFast( vec3_t v )
 {
 	float ilength;
 
@@ -851,13 +898,13 @@ static ID_INLINE void VectorNormalizeFast( vec3_t v )
 	v[2] *= ilength;
 }
 
-static ID_INLINE void VectorInverse( vec3_t v ){
+ID_INLINE void VectorInverse( vec3_t v ){
 	v[0] = -v[0];
 	v[1] = -v[1];
 	v[2] = -v[2];
 }
 
-static ID_INLINE void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross ) {
+ID_INLINE void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross ) {
 	cross[0] = v1[1]*v2[2] - v1[2]*v2[1];
 	cross[1] = v1[2]*v2[0] - v1[0]*v2[2];
 	cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
@@ -2000,7 +2047,7 @@ typedef enum Eorientations
 	NEGATIVE_X,
 	NEGATIVE_Z,
 	NEGATIVE_Y
-};
+} Eorientations_t;
 /*
 Ghoul2 Insert End
 */
@@ -2064,5 +2111,7 @@ enum {
 };
 
 
-
+typedef int( *cmpFunc_t )( const void *a, const void *b );
+void *Q_LinearSearch( const void *key, const void *ptr, size_t count,
+	size_t size, cmpFunc_t cmp );
 #endif	// __Q_SHARED_H

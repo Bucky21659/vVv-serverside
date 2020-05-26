@@ -1,6 +1,6 @@
 // hide these nasty warnings
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_MSC_VER)
 
 #pragma warning(disable : 4018)     // signed/unsigned mismatch
 #pragma warning(disable : 4032)
@@ -15,6 +15,7 @@
 #pragma warning(disable : 4201)
 #pragma warning(disable : 4214)
 #pragma warning(disable : 4244)		// conversion from double to float
+#pragma warning(disable : 4245)	// signed/unsigned mismatch #2
 #pragma warning(disable : 4284)		// return type not UDT
 #pragma warning(disable : 4305)		// truncation from const double to float
 #pragma warning(disable : 4310)		// cast truncates constant value
@@ -29,5 +30,5 @@
 #pragma warning(disable : 4711)		// selected for automatic inline expansion
 #pragma warning(disable : 4220)		// varargs matches remaining parameters
 #pragma warning(disable : 4786)		//identifier was truncated
-
+#pragma warning(disable : 4996)		// This function or variable may be unsafe.
 #endif

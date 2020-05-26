@@ -1,10 +1,16 @@
 @echo off
 
-@set "zip=C:\Program Files\7-Zip\7z.exe"
+@set zip="C:\Program Files\7-Zip\7z.exe"
 
 @set include=
 @set savedpath=%path%
 @set path=%path%;..\..\..\bin
+
+@set outdir="..\..\base"
+@set vmout=%outdir%\vm
+@set pk3out="..\..\base\o102_vvv_serverside.pk3"
+if exist %vmout%\jk2mpgame.qvm del %vmout%\jk2mpgame.qvm
+if exist %pk3out% del %pk3out%
 
 del /q vm
 if not exist vm\nul mkdir vm
@@ -96,15 +102,15 @@ set cc=..\..\..\bin\lcc -A -DQ3_VM -DMISSIONPACK -DJK2_GAME -S -Wf-target=byteco
 q3asm -f ../game
 @if errorlevel 1 goto quit
 
-mkdir "..\..\base\vm"
-copy /y *.qvm "..\..\base\vm"
+if not exist ..\%outdir%\vm mkdir ..\%outdir%\vm
+copy /y *.qvm ..\%outdir%\vm
 
 del /q *.asm
 del /q *.map
 
 cd ..
 ::echo %zip%
-if exist "%zip%" "%zip%" a -tzip ..\base\o102_vvv_serverside.pk3 .\vm
+if exist %zip% %zip% a -tzip %pk3out% .\vm
 exit /B
 
 :quit

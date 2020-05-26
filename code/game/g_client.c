@@ -1217,7 +1217,6 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 	int			teamTask, teamLeader, team, health;
 	char		*s;
 	char		model[MAX_QPATH];
-	char		forcePowers[MAX_QPATH];
 	char		oldname[MAX_INFO_STRING];
 	gclient_t	*client;
 	char		c1[MAX_INFO_STRING];
@@ -1226,8 +1225,6 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 	char		blueTeam[MAX_INFO_STRING];
 	char		userinfo[MAX_INFO_STRING] = {0};
 	qboolean	changedName	= qfalse;
-	int x;
-
 
 	ent = g_entities + clientNum;
 	client = ent->client;
@@ -1393,11 +1390,11 @@ void ClientUserinfoChanged( int clientNum, qboolean checkFlood ) {
 	}
 
 	s = Info_ValueForKey(userinfo, "cjp_client");
-	if (s && !Q_stricmpn(s, "1.4JAPRO", 8)) {
+	if (VALIDSTRING(s) && !Q_stricmpn(s, "1.4JAPRO", 8)) {
 		client->sess.amflags |= AMFLAG_PLUGINDETECTED;
 	}
 	else {
-		client->sess.amflags &= AMFLAG_PLUGINDETECTED;
+		client->sess.amflags &= ~AMFLAG_PLUGINDETECTED;
 	}
 
 	Q_strncpyz(redTeam, Info_ValueForKey( userinfo, "g_redteam" ), sizeof(redTeam));
@@ -1483,7 +1480,7 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		//OpenJK add
 		if ( !OkRealIP[0] )
 		{//No IP sent when connecting, probably an unban hack attempt
-			client->pers.connected = CON_DISCONNECTED;
+			//client->pers.connected = CON_DISCONNECTED;
 			G_SecurityLogPrint( "Client sent no IP when connecting", &g_entities[clientNum] );
 			return "Bad userinfo";
 		}
