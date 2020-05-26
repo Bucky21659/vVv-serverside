@@ -110,6 +110,7 @@ vmCvar_t	g_allowFreeTeam;
 vmCvar_t	g_maxTeamSize;
 vmCvar_t	g_suicideScorePenalty;
 vmCvar_t	g_forceUniqueNames;
+vmCvar_t	g_shieldHitEffects;
 vmCvar_t	g_dropAllItemsOnDeath;
 vmCvar_t	g_enableChatBubble;
 vmCvar_t	g_fixSaberSwitch;
@@ -190,6 +191,7 @@ int gDuelist2 = -1;
 	{ &g_maxTeamSize, "g_maxTeamSize", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "If set, specifies a maximum players allowed on each team." },
 	{ &g_suicideScorePenalty, "g_suicideScorePenalty", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Enables/disables score penanlty given to players after they suicide using /kill. 0: No penalty - 1: baseJK2 behavior" },
 	{ &g_forceUniqueNames, "g_forceUniqueNames", "1", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Disallows more than one player to have the same name, additionally appends client number to \"Padawan\" names." },
+	{ &g_shieldHitEffects, "g_shieldHitEffects", "1", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "Enables/disables the green bubble hit effect on indicating players having taken shield damage.  1: BaseJK2MP shield effect - 2: Unused SP shield effect - 3: Use both effects" },
 	{ &g_dropAllItemsOnDeath, "g_dropAllItemsOnDeath", "0", CVAR_VVV|CVAR_ARCHIVE, 0, qtrue, qfalse, "If enabled, players will drop consumable items in their inventory on death. 1: Drops items only - 2: Drops items and weapons" },
 	{ &g_enableChatBubble, "g_enableChatBubble", "1", CVAR_VVV, 0, qtrue, qfalse, "" },
 	{ &g_fixSaberSwitch, "g_fixSaberSwitch", "0", CVAR_VVV, 0, qfalse, qfalse, "Prevents instant saber attacks when a player switching away from another weapon while holding attack" },

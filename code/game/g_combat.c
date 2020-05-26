@@ -2308,13 +2308,36 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 
 	if (shieldAbsorbed)
 	{
-		gentity_t	*evEnt;
+		if (g_shieldHitEffects.integer & 1) { //base JK2MP shield bubble
+			gentity_t	*evEnt;
 
-		// Send off an event to show a shield shell on the player, pointing in the right direction.
-		evEnt = G_TempEntity(vec3_origin, EV_SHIELD_HIT);
-		evEnt->s.otherEntityNum = targ->s.number;
-		evEnt->s.eventParm = DirToByte(dir);
-		evEnt->s.time2=shieldAbsorbed;
+			// Send off an event to show a shield shell on the player, pointing in the right direction.
+			evEnt = G_TempEntity(targ->r.currentOrigin, EV_SHIELD_HIT);
+			evEnt->s.otherEntityNum = targ->s.number;
+			evEnt->s.eventParm = DirToByte(dir);
+			evEnt->s.time2=shieldAbsorbed;
+		}
+
+		if (g_shieldHitEffects.integer & 2) { //unused flicker effect from SP
+			shieldAbsorbed *= 20;
+
+			if (shieldAbsorbed > 1500)
+			{
+				shieldAbsorbed = 1500;
+			}
+			if (shieldAbsorbed < 200)
+			{
+				shieldAbsorbed = 200;
+			}
+
+			if (targ->client->ps.powerups[PW_SHIELDHIT] < (level.time + shieldAbsorbed))
+			{
+				targ->client->ps.powerups[PW_SHIELDHIT] = level.time + shieldAbsorbed;
+			}
+			//flicker for as many ms as damage was absorbed (*20)
+			//therefore 10 damage causes 1/5 of a seond of flickering, whereas
+			//a full 100 causes 2 seconds (but is reduced to 1.5 seconds due to the max)
+		}
 	}
 
 	// do the damage

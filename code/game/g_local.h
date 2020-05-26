@@ -1174,6 +1174,7 @@ extern	vmCvar_t	g_maxTeamSize;
 extern	vmCvar_t	g_suicideScorePenalty;
 extern	vmCvar_t	g_forceUniqueNames;
 extern	vmCvar_t	g_allowFreeTeam;
+extern	vmCvar_t	g_shieldHitEffects;
 extern	vmCvar_t	g_dropAllItemsOnDeath;
 
 // extern	vmCvar_t	g_scorePlums;
