@@ -379,80 +379,110 @@ TossClientItems
 Toss the weapon and powerups for the killed player
 =================
 */
-
 void TossClientItems( gentity_t *self, int meansOfDeath ) {
 	gitem_t		*item;
 	int			weapon;
-	float		angle;
-	int			i;
+	float		angle = 0.0f;
+	int			i, maxweapons = g_dropAllItemsOnDeath.integer >= 2 ? WP_EMPLACED_GUN : 1; //since WP_EMPLACED_GUN is the last valid weapon
 	gentity_t	*drop;
 
-	// drop the weapon if not a gauntlet or machinegun
-	weapon = self->s.weapon;
 
-	// make a special check to see if they are changing to a new
-	// weapon that isn't the mg or gauntlet.  Without this, a client
-	// can pick up a weapon, be killed, and not drop the weapon because
-	// their weapon change hasn't completed yet and they are still holding the MG.
-	if ( weapon == WP_BRYAR_PISTOL) {
-		if ( self->client->ps.weaponstate == WEAPON_DROPPING ) {
-			weapon = self->client->pers.cmd.weapon;
+	for (i = 0 ; i < maxweapons ; i++) {
+		if (g_dropAllItemsOnDeath.integer && self->client) {
+			if (i == WP_NONE || i == WP_STUN_BATON || i == WP_SABER)
+				continue;
+			if (!(self->client->ps.stats[STAT_WEAPONS] & (1<<i)))
+				continue;
+
+			weapon = i;
+			angle += flrand(2.5f, 45.0f);
 		}
-		if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
-			weapon = WP_NONE;
+		else {
+			// drop the weapon if not a gauntlet or machinegun
+			weapon = self->s.weapon;
+
+			// make a special check to see if they are changing to a new
+			// weapon that isn't the mg or gauntlet.  Without this, a client
+			// can pick up a weapon, be killed, and not drop the weapon because
+			// their weapon change hasn't completed yet and they are still holding the MG.
+			if ( weapon == WP_BRYAR_PISTOL) {
+				if ( self->client->ps.weaponstate == WEAPON_DROPPING ) {
+					weapon = self->client->pers.cmd.weapon;
+				}
+				if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+					weapon = WP_NONE;
+				}
+			}
+		}
+
+		self->s.bolt2 = weapon;
+
+		if ( weapon > WP_BRYAR_PISTOL &&
+			weapon != WP_EMPLACED_GUN &&
+			weapon != WP_TURRET &&
+			self->client->ps.ammo[ weaponData[weapon].ammoIndex ]
+		) {
+			gentity_t *te;
+			int ammo = 0;
+
+			// find the item type for this weapon
+			item = BG_FindItemForWeapon( weapon );
+
+			// tell all clients to remove the weapon model on this guy until he respawns
+			te = G_TempEntity( vec3_origin, EV_DESTROY_WEAPON_MODEL );
+			te->r.svFlags |= SVF_BROADCAST;
+			te->s.eventParm = self->s.number;
+
+
+			//fix mine drops incorrect ammo count
+			if (g_minefix.integer && item->giType == IT_WEAPON && item->giTag == WP_TRIP_MINE) {
+				qboolean clampToMaxThree = qfalse;
+				int setting = g_minefix.integer;
+
+				if (g_minefix.integer < 0) {
+					//for negative values of minefix, we will clamp number of mines dropped to max 3.
+					clampToMaxThree = qtrue;
+					setting *= -1;
+				}
+
+				if (setting == 1) {
+					//1 = ALWAYS drop true mine count
+					ammo = self->client->ps.ammo[ weaponData[weapon].ammoIndex ];
+				} else {
+					//2 = only true amount if he suicided
+					if (meansOfDeath == MOD_SUICIDE)
+						ammo = self->client->ps.ammo[ weaponData[weapon].ammoIndex ];
+				}
+
+				if (clampToMaxThree && ammo > 3) {
+					ammo = 3;
+				}
+			}
+
+			Drop_Item( self, item, angle, ammo);
 		}
 	}
 
-	self->s.bolt2 = weapon;
+	if (g_dropAllItemsOnDeath.integer) { //drop all holdable items
+		angle = flrand(1.0f, 45.0f);
+		for (i = HI_SEEKER; i < HI_NUM_HOLDABLE; i++) {
+			if (i == HI_DATAPAD) //has a model for some reason, but it's unused and unfinished
+				continue;
 
-	if ( weapon > WP_BRYAR_PISTOL &&
-		weapon != WP_EMPLACED_GUN &&
-		weapon != WP_TURRET &&
-		self->client->ps.ammo[ weaponData[weapon].ammoIndex ]
-	) {
-		gentity_t *te;
-		int ammo = 0;
+			if (!(self->client->ps.stats[STAT_HOLDABLE_ITEMS] & (1 << i)))
+				continue;
 
-		// find the item type for this weapon
-		item = BG_FindItemForWeapon( weapon );
-
-		// tell all clients to remove the weapon model on this guy until he respawns
-		te = G_TempEntity( vec3_origin, EV_DESTROY_WEAPON_MODEL );
-		te->r.svFlags |= SVF_BROADCAST;
-		te->s.eventParm = self->s.number;
-
-
-		//fix mine drops incorrect ammo count
-		if (g_minefix.integer && item->giType == IT_WEAPON && item->giTag == WP_TRIP_MINE) {
-			qboolean clampToMaxThree = qfalse;
-			int setting = g_minefix.integer;
-
-			if (g_minefix.integer < 0) {
-				//for negative values of minefix, we will clamp number of mines dropped to max 3.
-				clampToMaxThree = qtrue;
-				setting *= -1;
-			}
-
-			if (setting == 1) {
-				//1 = ALWAYS drop true mine count
-				ammo = self->client->ps.ammo[ weaponData[weapon].ammoIndex ];
-			} else {
-				//2 = only true amount if he suicided
-				if (meansOfDeath == MOD_SUICIDE)
-					ammo = self->client->ps.ammo[ weaponData[weapon].ammoIndex ];
-			}
-
-			if (clampToMaxThree && ammo > 3) {
-				ammo = 3;
+			item = BG_FindItemForHoldable(i);
+			if (item) {
+				Drop_Item(self, item, angle, 1);
+				angle += flrand(5.0f, 45.0f);
 			}
 		}
-
-		Drop_Item( self, item, 0, ammo);
 	}
 
 	// drop all the powerups if not in teamplay
 	if ( g_gametype.integer != GT_TEAM ) {
-		angle = 45;
+		angle = 45.0f;
 		for ( i = 1 ; i < PW_NUM_POWERUPS ; i++ ) {
 			if ( self->client->ps.powerups[ i ] > level.time ) {
 				item = BG_FindItemForPowerup( i );
@@ -466,7 +496,7 @@ void TossClientItems( gentity_t *self, int meansOfDeath ) {
 				if ( drop->count < 1 ) {
 					drop->count = 1;
 				}
-				angle += 45;
+				angle += 45.0f;
 			}
 		}
 	}

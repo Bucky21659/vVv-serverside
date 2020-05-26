@@ -215,7 +215,7 @@ void Cmd_Give_f (gentity_t *ent)
 	else
 		give_all = qfalse;
 
-	if (give_all)
+	if (give_all || Q_stricmp(name, "items") == 0)
 	{
 		i = 0;
 		while (i < HI_NUM_HOLDABLE)
@@ -1494,6 +1494,9 @@ int G_ItemUsable(playerState_t *ps, int forcedUse)
 	{
 		forcedUse = bg_itemlist[ps->stats[STAT_HOLDABLE_ITEM]].giTag;
 	}
+
+	if (g_dropAllItemsOnDeath.integer && (ps->stats[STAT_HEALTH] <= 0 || (ps->eFlags & EF_DEAD)))
+		return 0; //maybe we never want to use any items when dead?
 
 	switch (forcedUse)
 	{

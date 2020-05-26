@@ -1623,8 +1623,20 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity, int ammoCo
 
 	dropped->classname = item->classname;
 	dropped->item = item;
-	VectorSet (dropped->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS);
-	VectorSet (dropped->r.maxs, ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS);
+	if (g_dropAllItemsOnDeath.integer && dropped->item->giType == IT_HOLDABLE) { //special case handling for bbox on dropped items
+		if (dropped->item->giTag == HI_MEDPAC) {
+			VectorSet(dropped->r.mins, -2.5, -2.5, -2.5);
+			VectorSet(dropped->r.maxs, 2.5, 2.5, 2.5);
+		}
+		else {
+			VectorClear(dropped->r.mins);
+			VectorClear(dropped->r.maxs);
+		}
+	}
+	else {
+		VectorSet(dropped->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS);
+		VectorSet(dropped->r.maxs, ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS);
+	}
 
 	dropped->r.contents = CONTENTS_TRIGGER;
 
