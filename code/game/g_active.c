@@ -625,7 +625,13 @@ Returns qfalse if the client is dropped
 =================
 */
 qboolean ClientInactivityTimer( gclient_t *client ) {
-	if ( ! g_inactivity.integer ) {
+	if ( g_pauseGame.integer ) {
+		client->inactivityTime = level.time + ((g_inactivity.integer > 0 ? g_inactivity.integer : 60) * 1000);
+		client->inactivityWarning = qfalse;
+		return qtrue;
+	}
+
+	if ( !g_inactivity.integer ) {
 		// give everyone some time, so if the operator sets g_inactivity during
 		// gameplay, everyone isn't kicked
 		client->inactivityTime = level.time + 60 * 1000;
@@ -638,8 +644,13 @@ qboolean ClientInactivityTimer( gclient_t *client ) {
 		client->inactivityWarning = qfalse;
 	} else if ( !client->pers.localClient ) {
 		if ( level.time > client->inactivityTime ) {
-			trap_DropClient( client - level.clients, "Dropped due to inactivity" );
-			return qfalse;
+			//trap_DropClient( client - level.clients, "Dropped due to inactivity" );
+			//return qfalse;
+			if (client->sess.sessionTeam != TEAM_SPECTATOR && !(client->ps.pm_flags & PMF_FOLLOW)) {
+				SetTeam(&g_entities[client->ps.clientNum], "s");
+				G_SendClientPrint(-1, "%s was sent to spectate due to inactivity\n", client->pers.netname);
+				return qtrue;
+			}
 		}
 		if ( level.time > client->inactivityTime - 10000 && !client->inactivityWarning ) {
 			client->inactivityWarning = qtrue;
