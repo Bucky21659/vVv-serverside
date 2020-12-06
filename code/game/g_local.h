@@ -669,7 +669,7 @@ typedef struct {
 	int			numSpawnVarChars;
 	char		spawnVarChars[MAX_SPAWN_VARS_CHARS];
 
-	#define		UNPAUSE_COUNTDOWN	3000
+	#define		UNPAUSE_COUNTDOWN	5000
 	int			unpauseTime;			//when level.time hits this, unpause the game if it is paused.
 	int			unpauseClient;
 

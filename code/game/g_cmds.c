@@ -417,7 +417,7 @@ void Cmd_Kill_f( gentity_t *ent ) {
 	}
 
 	if (g_pauseGame.integer) {
-		trap_SendServerCommand( ent-g_entities, va("print \"Can't kill yourself while game is paused :----D\n\"") );
+		//trap_SendServerCommand( ent-g_entities, va("print \"Can't kill yourself while game is paused :----D\n\"") );
 		return;
 	}
 
@@ -1236,9 +1236,16 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText ) 
 	if (ent->client->sess.amflags & AMFLAG_MUTED) {
 		trap_SendServerCommand( ent - g_entities, "cp \"You are muted.\"" );
 		return;
-	} else if ( (ent->client->sess.amflags & AMFLAG_MUTED_PUBONLY) && mode != SAY_TEAM) {
-		trap_SendServerCommand( ent - g_entities, "cp \"You can only talk in team chat.\"" );
-		return;
+	} else if (mode != SAY_TEAM && ((ent->client->sess.amflags & AMFLAG_MUTED_PUBONLY) || (level.matchStarted && ent->client->sess.sessionTeam == TEAM_SPECTATOR))) {
+		if (level.matchStarted && mode == SAY_TELL && target && target->client) {
+			if (target->client->sess.sessionTeam != TEAM_SPECTATOR) {
+				trap_SendServerCommand( ent - g_entities, "cp \"You can only talk in team chat.\"" );
+				return;
+			}
+		}
+		else if (!g_pauseGame.integer) {
+			mode = SAY_TEAM;
+		}
 	}
 
 	switch ( mode ) {
@@ -1352,6 +1359,13 @@ static void Cmd_Tell_f( gentity_t *ent ) {
 
 	G_LogPrintf( "tell: \"%s\" (%d) to \"%s\" (%d): \"%s\"\n",
 		ent->client->pers.netnameClean, ent-g_entities, target->client->pers.netnameClean, target-g_entities, p );
+
+	if (level.matchStarted && target && target->client) {
+		if (target->client->sess.sessionTeam != TEAM_SPECTATOR) {
+			trap_SendServerCommand(ent - g_entities, "cp \"You can only talk in team chat.\"");
+			return;
+		}
+	}
 
 	G_Say( ent, target, SAY_TELL, p );
 	// don't tell to the player self if it was already directed to this player
@@ -1815,7 +1829,7 @@ const char *G_ClientNameWithPrefix (gentity_t *ent, const int maxNameChars) {
 	memset(&buf, 0, 256);
 
 	if (ent && ent->client)
-		Com_sprintf(buf, sizeof(buf), "%02d^%c) ^7 %s", ent - g_entities, col, maxNameChars > 0 ?
+		Com_sprintf(buf, sizeof(buf), "%02d^%c) " S_COLOR_WHITE " %s", ent - g_entities, col, maxNameChars > 0 ?
 			G_ClientNameFixedLength(ent, maxNameChars) :
 			ent->client->pers.netname);
 	else
